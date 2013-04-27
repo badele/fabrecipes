@@ -124,16 +124,24 @@ def computer_sample():
 
 
 def run_on_archroot(cmd):
+    """
+    chroot on the new installation
+    """
     run_as_root('arch-chroot /mnt %s' % cmd)
 
 
 def require_isoinstall():
+    """ 
+    check if run in the ISO installation
+    """
     if system.get_hostname() != "archiso":
         abort("You seem not execute this script on iso install")
 
 
 def require_partition():
-    # Check if all partitions type exist
+    """
+    Check if all partitions type exist and format
+    """
     spart = {'Linux': 83, 'Swap': 82}
     p = disk.partitions()
 
@@ -155,6 +163,9 @@ def require_partition():
 
 
 def mount_partitions():
+    """
+    mount all paritions
+    """
     disk.mount(env.part['/']['device'], "/mnt/")
     if not is_dir('/mnt/boot'):
         run_as_root('mkdir /mnt/boot')
@@ -164,11 +175,17 @@ def mount_partitions():
 
 
 def install_base():
+    """
+    Install base system
+    """
     run_as_root('pacstrap /mnt base base-devel syslinux')
     run_as_root('genfstab -U -p /mnt >> /mnt/etc/fstab')
 
 
 def reboot_system():
+    """
+    Reboot system for the next step
+    """
     print ("Please wait and do the next step: ")
     print ("""From you physical computer
 loadkeys fr
@@ -183,16 +200,25 @@ systemctl start sshd
 
 
 def require_user():
+    """ 
+    Check if user is created
+    """
     require.users.user('badele')
 
 
 def require_keymap(keymap):
+    """
+    Check a keymap
+    """
     conf = 'KEYMAP=%s' % keymap
     config_file = '/etc/vconsole.conf'
     require_file(config_file, conf, use_sudo=True)
 
 
 def require_timezone(zone, city):
+    """
+    Check a timezone
+    """
     config_file = '/etc/localtime'
     link = '/usr/share/zoneinfo/%(zone)s/%(city)s' % locals()
     if files.exists(config_file):
@@ -201,11 +227,17 @@ def require_timezone(zone, city):
 
 
 def require_install_boot():
+    """
+    Install boot
+    """
     run_on_archroot('mkinitcpio -p linux')
     run_on_archroot('syslinux-install_update -iam')
 
 
 def require_internet():
+    """
+    Check if they have a internet connexion
+    """
     with settings(warn_only=True):
         res = run_as_root('ping -c1 -W1 8.8.8.8')
         if res.return_code == 1:
@@ -213,6 +245,9 @@ def require_internet():
 
 
 def require_yaourt_configuration():
+    """
+    Add a yaourt configuration
+    """
     config_file = '/etc/pacman.conf'
 
     with watch(config_file, use_sudo=True) as config:
