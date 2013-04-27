@@ -1,7 +1,7 @@
 About
 =====
 
-Fabrecipes it's samples of Fabric and Fabtools scrips
+Fabrecipes it's samples of Fabric and Fabtools scrips. In the future, the script will offer a auto install package. For example, a Emacs with autoconfigured plugins.
 
 Example
 ========
