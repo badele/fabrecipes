@@ -6,10 +6,9 @@ from fabric.operations import prompt, reboot
 
 # Fabtools
 from fabtools.require import file as require_file
-from fabric.contrib import files
 from fabtools.utils import run_as_root
 from fabric.contrib.files import append
-from fabtools.files import watch, is_dir
+from fabtools.files import watch, is_dir, is_link
 
 from fabtools import require
 from fabtools import system
@@ -110,6 +109,7 @@ def configure():
     require_internet()
     require_yaourt_configuration()
     require_minimal_packages()
+    require.users.user(env.useraccount)
 
 
 @task
@@ -118,6 +118,7 @@ def computer_sample():
     Profile for HP Pavilion G Series
     """
     env.hostname = 'virtualbox'
+    env.useraccount = 'badele'
     env.locale = 'fr_FR.UTF-8'
     env.keymap = 'fr-pc'
     env.timezone_continent = 'Europe'
@@ -209,12 +210,6 @@ systemctl start sshd
     reboot(1)
 
 
-def require_user():
-    """
-    Check if user is created
-    """
-    require.users.user('badele')
-
 
 def require_keymap(keymap):
     """
@@ -231,7 +226,7 @@ def require_timezone(zone, city):
     """
     config_file = '/etc/localtime'
     link = '/usr/share/zoneinfo/%(zone)s/%(city)s' % locals()
-    if files.exists(config_file):
+    if is_link(config_file):
         run_as_root('rm %(config_file)s' % locals())
     run_as_root('ln -s %(link)s %(config_file)s' % locals())
 
