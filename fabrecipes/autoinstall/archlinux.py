@@ -23,6 +23,19 @@ from fabtools import disk
      /dev/sda2[Swap]
      /dev/sda3[Linux]
 
+   For use this script
+
+     1) Prepare SSH connexion from ISO install
+        $ loadkeys fr
+        $ passwd
+        $ systemctl start sshd
+        $ ip addr # show IP ISO install
+
+     2) Create a computer_name in the archlinux.py (see computer_sample)
+     3) $ fab -f fabrecipes/autoinstall/archlinux.py -H root@host computer_name install
+     4) ... Reboot on your new installation
+     5) $ fab -f fabrecipes/autoinstall/archlinux.py -H root@host computer_name configure
+
    It does that in two step:
 
    1)
@@ -42,12 +55,6 @@ from fabtools import disk
      - Configure yaourt package manager
      - Instal minimal packages
 
-   For use this script
-
-     1) Create a computer_name in the archlinux.py (see computer_sample)
-     2) execture fab -f autoinstall/archlinux/archlinux.py -H root@host computer_name install
-     3) ... Reboot you new installation
-     4) fab -f autoinstall/archlinux/archlinux.py -H root@host computer_name configure
 """
 
 
@@ -56,7 +63,7 @@ def install():
     """
     Install archlinux in a new computer
 
-    Please select profil begin by computer\_
+    Please select profil begin by computer_
 
     loadkeys fr
     passwd
@@ -64,7 +71,7 @@ def install():
     now, you can connect to new computer from SSH
 
     # == HDD configuration
-    # prepare partition with same confiration from computer\_.env.part
+    # prepare partition with same confiration from computer_
 
     """
     if not 'hostname' in env:
@@ -75,6 +82,7 @@ def install():
     mount_partitions()
     install_base()
     require_install_boot()
+    set_root_password()
     reboot_system()
 
 
@@ -83,7 +91,7 @@ def configure():
     """
     Configure archlinux fresh installation
 
-    Please select profil begin by computer\_
+    Please select profil begin by computer_
 
     loadkeys fr
     passwd
@@ -131,7 +139,7 @@ def run_on_archroot(cmd):
 
 
 def require_isoinstall():
-    """ 
+    """
     check if run in the ISO installation
     """
     if system.get_hostname() != "archiso":
@@ -142,7 +150,7 @@ def require_partition():
     """
     Check if all partitions type exist and format
     """
-    spart = {'Linux': 83, 'Swap': 82}
+    spart = {'Linux': 0x83, 'Swap': 0x82}
     p = disk.partitions()
 
     r = p[env.part['/boot']['device']] == spart['Linux']
@@ -178,29 +186,31 @@ def install_base():
     """
     Install base system
     """
-    run_as_root('pacstrap /mnt base base-devel syslinux')
+    run_as_root('pacstrap /mnt base base-devel syslinux openssh')
     run_as_root('genfstab -U -p /mnt >> /mnt/etc/fstab')
+
+
+def set_root_password():
+    run_on_archroot('passwd')
 
 
 def reboot_system():
     """
     Reboot system for the next step
     """
-    print ("Please wait and do the next step: ")
-    print ("""From you physical computer
+    print("Please wait and do the next step: ")
+    print("""From you physical computer
+# after reboot select "Boot existing OS"
 loadkeys fr
-passwd
 dhcpcd
-pacman -S openssh
 systemctl start sshd
-# clean you .ssh/know_hosts
 """)
-    print ("fab first_configuration:hostname=%s" % env.hostname)
-    reboot(30)
+    print("fab -f fabrecipes/autoinstall/archlinux.py -H root@%s computer_sample configure" % env.host)
+    reboot(1)
 
 
 def require_user():
-    """ 
+    """
     Check if user is created
     """
     require.users.user('badele')
