@@ -1,5 +1,5 @@
 # Fabric
-from fabric.api import settings, env, task
+from fabric.api import settings, env, task, sudo
 from fabric.utils import abort
 from fabric.colors import red
 from fabric.operations import prompt, reboot
@@ -11,6 +11,7 @@ from fabric.contrib.files import append
 from fabtools.files import watch, is_dir, is_link
 
 from fabtools import require
+from fabtools import python
 from fabtools import system
 from fabtools import arch
 from fabtools import disk
@@ -31,9 +32,9 @@ from fabtools import disk
         $ ip addr # show IP ISO install
 
      2) Create a computer_name in the archlinux.py (see computer_sample)
-     3) $ fab -f fabrecipes/autoinstall/archlinux.py -H root@host computer_name install
+     3) $ fab -f fabrecipes/archlinux/autoinstall.py -H root@host computer_name install
      4) ... Reboot on your new installation
-     5) $ fab -f fabrecipes/autoinstall/archlinux.py -H root@host computer_name configure
+     5) $ fab -f fabrecipes/archlinux/autoinstall.py -H root@host computer_name configure
 
    It does that in two step:
 
@@ -55,6 +56,28 @@ from fabtools import disk
      - Instal minimal packages
 
 """
+
+
+@task
+def computer_sample():
+    """
+    Sample computer configuration
+    """
+    env.hostname = 'sample-computer'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.keymap = 'fr-pc'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'City'
+    env.xorg = ['virtualbox-guest-utils']
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        '/': {'device': '/dev/sda3', 'ptype': 'Linux', 'ftype': 'ext4'},
+        '/boot': {'device': '/dev/sda1', 'ptype': 'Linux', 'ftype': 'ext2'},
+        'swap': {'device': '/dev/sda2', 'ptype': 'Linux swap / Solaris', 'ftype': 'swap'},
+    }
 
 
 @task
@@ -80,8 +103,8 @@ def install():
     require_partition()
     mount_partitions()
     install_base()
-    require_install_boot()
     set_root_password()
+    prepare_boot()
     reboot_system()
 
 
@@ -102,34 +125,192 @@ def configure():
     if not 'hostname' in env:
         abort("Please select profil computer")
 
+    run_as_root('systemctl enable sshd')
     require.system.hostname(env.hostname)
     require.system.default_locale(env.locale)
     require_keymap(env.keymap)
     require_timezone(env.timezone_continent, env.timezone_city)
     require_internet()
     require_yaourt_configuration()
-    require_minimal_packages()
-    require.users.user(env.useraccount)
+    require.users.user(env.useraccount, shell='/bin/zsh')
+    env_base()
 
 
 @task
-def computer_sample():
+def env_base(direct=True):
     """
-    Profile for HP Pavilion G Series
+    Install base system
     """
-    env.hostname = 'virtualbox'
-    env.useraccount = 'badele'
-    env.locale = 'fr_FR.UTF-8'
-    env.keymap = 'fr-pc'
-    env.timezone_continent = 'Europe'
-    env.timezone_city = 'City'
-    env.arch = 'x86_64'
-    env.disk = '/dev/sda'
-    env.part = {
-        '/': {'device': '/dev/sda3', 'ptype': 'Linux', 'ftype': 'ext4'},
-        '/boot': {'device': '/dev/sda1', 'ptype': 'Linux', 'ftype': 'ext2'},
-        'swap': {'device': '/dev/sda2', 'ptype': 'Linux swap / Solaris', 'ftype': 'swap'},
-    }
+    if 'pkgs' not in env:
+        env.pkgs = []
+
+    pkgs = [
+        'yaourt',
+        'wget',
+        'git',
+        'rsync',
+        'sudo',
+        'net-tools',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs))
+    if direct:
+        install_packages()
+
+    python.get_python_location()
+    require.python.pip()
+
+
+@task
+def env_terminal(direct=True):
+    """
+    Install with terminal customization
+    """
+    env_base(False)
+    pkgs = [
+        'tmux',
+        'zsh',
+        'screenfetch',
+        'rxvt-unicode',
+        'terminus-font',
+        'mc',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs))
+    if direct:
+        install_packages()
+
+
+@task
+def env_xorg_base(direct=True):
+    """
+    Install base Xorg system
+    """
+    env_terminal(False)
+    pkgs = [
+        'xf86-input-synaptics',
+        'xorg-server',
+        'xorg-xinit',
+        'xorg-xev',
+        'xorg-xprop',
+        'xorg-xrdb',
+        'xterm',
+        'slim',
+        'slim-themes',
+        'gksu',
+        'arandr',
+        'xdotool',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs + env.xorg))
+    if direct:
+        install_packages()
+
+
+@task
+def env_xorg_i3(direct=True):
+    """
+    Install xorg with i3 feature
+    """
+    env_xorg_base(False)
+    pkgs = [
+        'i3-wm',
+        'i3lock',
+        'i3status',
+        'dmenu',
+        'xautolock',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs))
+    if direct:
+        install_packages()
+
+
+@task
+def env_xorg_light(direct=True):
+    """
+    Install i3 with lightweight software
+    """
+    env_xorg_i3(False)
+    pkgs = [
+        'spacefm',
+        'cifs-utils',
+        'gigolo',
+        'zathura',
+        'zathura-pdf-mupdf',
+        'wicd',
+        'wicd-gtk',
+        'volumeicon',
+        'parcellite',
+        'feh',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs))
+    if direct:
+        install_packages()
+
+
+@task
+def env_xorg_misc(direct=True):
+    """
+    Full Xorg installation
+    (Xorg + i3 + lighweight + misc software)
+    """
+    env_xorg_light(False)
+    pkgs = [
+        'alsa-utils',
+        'chromium',
+        'flashplugin',
+        'remmina',
+        'freerdp',
+        'keepassx',
+        'openvpn',
+        'xchat',
+    ]
+    env.pkgs = list(set(env.pkgs + pkgs))
+    if direct:
+        install_packages()
+
+
+@task
+def sync_dotfiles(workspace):
+    dst = '/home/%(useraccount)s/dotfiles' % env
+    cloned = False
+
+    # Clone if not exists
+    if not is_dir(dst):
+        cmd = 'cd ; git clone %(dotfiles)s' % env
+        sudo(cmd, user=env.useraccount)
+        cloned = True
+
+    # Pull dotfiles project
+    if not cloned:
+        # Mise a jours des sources
+        cmd = 'cd ~/dotfiles ; git pull'
+        sudo(cmd, user=env.useraccount)
+
+    # Synchronize system
+    cmd = 'rsync -avr --exclude ".git/" %(dst)s/system/ /' % locals()
+    run_as_root(cmd)
+
+    # Synchronize user
+    cmd = 'rsync -avr --exclude ".git/" --cvs-exclude %(dst)s/user/ ~/' % locals()
+    sudo(cmd, user=env.useraccount)
+
+    # Configure i3 with workspace
+    if is_link('/home/%(useraccount)s/.i3/config' % env):
+        sudo('rm ~/.i3/config', user=env.useraccount)
+    cmd = 'ln -s ~/.i3/config_%(workspace)s ~/.i3/config' % locals()
+    sudo(cmd, user=env.useraccount)
+
+    # Configure ZSH
+    if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
+        #cmd = 'cd ; git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh'
+        cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
+
+        sudo(cmd, user=env.useraccount)
+    require.python.package('virtualenvwrapper')
+
+def install_packages():
+    """
+    Install all packages in env.pkgs variable
+    """
+    require.arch.packages(env.pkgs)
 
 
 def run_on_archroot(cmd):
@@ -206,7 +387,7 @@ loadkeys fr
 dhcpcd
 systemctl start sshd
 """)
-    print("fab -f fabrecipes/autoinstall/archlinux.py -H root@%s computer_sample configure" % env.host)
+    print("fab -f fabrecipes/archlinux/autoinstall.py -H root@%s computer_sample configure" % env.host)
     reboot(1)
 
 
@@ -231,7 +412,7 @@ def require_timezone(zone, city):
     run_as_root('ln -s %(link)s %(config_file)s' % locals())
 
 
-def require_install_boot():
+def prepare_boot():
     """
     Install boot
     """
@@ -262,14 +443,3 @@ def require_yaourt_configuration():
     if config.changed:
         append(config_file, 'SigLevel = Optional', use_sudo=True)
         arch.update_index()
-
-
-def require_minimal_packages():
-    require.arch.packages([
-        'yaourt',
-        'wget',
-        'git',
-        'rsync',
-        'sudo',
-        'net-tools',
-    ])
