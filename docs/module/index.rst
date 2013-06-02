@@ -7,7 +7,7 @@ List module for autoinstall
 :mod:`autoinstall.archlinux`
 ----------------------------
 
-.. automodule:: autoinstall.archlinux
+.. automodule:: archlinux.autoinstall
     :members:
 
 
