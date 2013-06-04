@@ -7,7 +7,7 @@ from fabric.operations import prompt, reboot
 # Fabtools
 from fabtools.require import file as require_file
 from fabtools.utils import run_as_root
-from fabric.contrib.files import append
+from fabric.contrib.files import append, comment, sed
 from fabtools.files import watch, is_dir, is_link
 
 from fabtools import require
@@ -74,9 +74,29 @@ def computer_sample():
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
     env.part = {
-        '/': {'device': '/dev/sda3', 'ptype': 'Linux', 'ftype': 'ext4'},
-        '/boot': {'device': '/dev/sda1', 'ptype': 'Linux', 'ftype': 'ext2'},
-        'swap': {'device': '/dev/sda2', 'ptype': 'Linux swap / Solaris', 'ftype': 'swap'},
+        'lvm': {'device': '/dev/sda3', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '4g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '1.5g'
+        },
+        '/boot': {
+            'device': '/dev/sda1',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda2',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
     }
 
 
@@ -132,7 +152,7 @@ def configure():
     require_timezone(env.timezone_continent, env.timezone_city)
     require_internet()
     require_yaourt_configuration()
-    require.users.user(env.useraccount, shell='/bin/zsh')
+    require.users.user(env.useraccount, shell='/usr/bin/zsh')
     env_base()
 
 
@@ -145,12 +165,14 @@ def env_base(direct=True):
         env.pkgs = []
 
     pkgs = [
+        'zsh',
         'yaourt',
         'wget',
         'git',
         'rsync',
         'sudo',
         'net-tools',
+        'python2'
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
@@ -300,11 +322,11 @@ def sync_dotfiles(workspace):
 
     # Configure ZSH
     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
-        #cmd = 'cd ; git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh'
         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
 
         sudo(cmd, user=env.useraccount)
     require.python.package('virtualenvwrapper')
+
 
 def install_packages():
     """
@@ -337,7 +359,7 @@ def require_partition():
 
     r = p[env.part['/boot']['device']] == spart['Linux']
     r = r and p[env.part['swap']['device']] == spart['Swap']
-    r = r and p[env.part['/']['device']] == spart['Linux']
+    r = r and p[env.part['lvm']['device']] == spart['Linux']
 
     if not r:
         abort("can't continue, not found require partitions")
@@ -347,9 +369,33 @@ def require_partition():
     if r != "Y":
         abort("You do not want to continue :)")
 
-    disk.mkfs(env.part['/']['device'], env.part['/']['ftype'])
+    # disk.mkfs(env.part['/']['device'], env.part['/']['ftype'])
+
+    # Prepare system partition
     disk.mkfs(env.part['/boot']['device'], env.part['/boot']['ftype'])
     disk.mkswap(env.part['swap']['device'])
+
+    # Initialize lvm parition
+    run_as_root('pvcreate -yff -Z y %s' % env.part['lvm']['device'])
+    run_as_root('vgcreate -yff -Z y vg %s' % env.part['lvm']['device'])
+
+    # Create partition
+    run_as_root('lvcreate -n %s -L %s' %
+                (env.part['/']['device'], env.part['/']['size']))
+    run_as_root('lvcreate -n %s -L %s' %
+                (env.part['/home']['device'], env.part['/home']['size']))
+
+    # Format root on LVM
+    disk.mkfs(env.part['/']['device'], env.part['/']['ftype'])
+
+    # Format home on LVM
+    print(red('Encrypt home partition, manual intervention needed'))
+    run_as_root('cryptsetup luksFormat %s' % env.part['/home']['device'])
+
+    print(red('Open home partition, manual intervention needed'))
+    run_as_root('cryptsetup luksOpen %s home' % env.part['/home']['device'])
+    disk.mkfs('/dev/mapper/home', env.part['/home']['ftype'])
+    run_as_root('tune2fs -m 0 /dev/mapper/home')
 
 
 def mount_partitions():
@@ -360,7 +406,11 @@ def mount_partitions():
     if not is_dir('/mnt/boot'):
         run_as_root('mkdir /mnt/boot')
 
+    if not is_dir('/mnt/home'):
+        run_as_root('mkdir /mnt/home')
+
     disk.mount(env.part['/boot']['device'], "/mnt/boot")
+    disk.mount('/dev/mapper/home', "/mnt/home")
     disk.swapon(env.part['swap']['device'])
 
 
@@ -373,6 +423,7 @@ def install_base():
 
 
 def set_root_password():
+    print(red("Define Root password"))
     run_on_archroot('passwd')
 
 
@@ -410,14 +461,30 @@ def require_timezone(zone, city):
     if is_link(config_file):
         run_as_root('rm %(config_file)s' % locals())
     run_as_root('ln -s %(link)s %(config_file)s' % locals())
+    run_as_root('hwclock --systohc --utc')
 
 
 def prepare_boot():
     """
     Install boot
     """
+    # Prepare mkinitcpio
+    config_file = '/mnt/etc/mkinitcpio.conf'
+    comment(config_file, '^HOOKS')
+    with watch(config_file):
+        append(config_file, 'HOOKS="base udev autodetect modconf block keyboard lvm2 encrypt filesystems fsck"')
     run_on_archroot('mkinitcpio -p linux')
+
+    # Prepare syslinux
+    config_file = '/mnt/boot/syslinux/syslinux.cfg'
+    with watch(config_file):
+        sed(config_file, 'root=/dev/sda3', 'root=/dev/vg/root')
     run_on_archroot('syslinux-install_update -iam')
+
+    # Configure home encrypted mount
+    config_file = '/mnt/etc/crypttab'
+    with watch(config_file):
+        append(config_file, 'home /dev/vg/home', 'root=/dev/vg/root')
 
 
 def require_internet():
