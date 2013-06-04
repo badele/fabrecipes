@@ -67,6 +67,7 @@ def computer_sample():
     env.useraccount = 'badele'
     env.dotfiles = 'https://github.com/badele/dotfiles.git'
     env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
     env.keymap = 'fr-pc'
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
@@ -147,7 +148,7 @@ def configure():
 
     run_as_root('systemctl enable sshd')
     require.system.hostname(env.hostname)
-    require.system.default_locale(env.locale)
+    require_locale(env.locale, env.charset)
     require_keymap(env.keymap)
     require_timezone(env.timezone_continent, env.timezone_city)
     require_internet()
@@ -441,6 +442,16 @@ systemctl start sshd
     print("fab -f fabrecipes/archlinux/autoinstall.py -H root@%s computer_sample configure" % env.host)
     reboot(1)
 
+
+def require_locale(locale, charset):
+    """
+    Set locale
+    """
+    config_file = '/etc/locale.gen'
+    with watch(config_file):
+        append(config_file, '%s %s' % (locale, charset))
+
+    require.system.default_locale(locale)
 
 
 def require_keymap(keymap):
