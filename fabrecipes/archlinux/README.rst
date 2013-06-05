@@ -27,6 +27,11 @@ Installation:
     * sudo
     * net-tools
     * python2
+    
+  * **python2** with all packages installed with **pip**
+
+    * virtualenv
+    * virtualenvwrapper
 
 * **Bonus autoinstallation**
   
