@@ -139,6 +139,7 @@ def env_base(direct=True):
 
     python.get_python_location()
     require.python.pip()
+    require.python.package(['virtualenv', 'virtualenvwrapper'])
 
 
 @task
@@ -167,7 +168,6 @@ def env_xorg_base(direct=True):
     """
     env_terminal(False)
     pkgs = [
-        'xf86-input-synaptics',
         'xorg-server',
         'xorg-xinit',
         'xorg-xev',
@@ -180,7 +180,7 @@ def env_xorg_base(direct=True):
         'arandr',
         'xdotool',
     ]
-    env.pkgs = list(set(env.pkgs + pkgs + env.xorg))
+    env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         install_packages()
 
@@ -282,9 +282,7 @@ def sync_dotfiles(workspace):
     # Configure ZSH
     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
-
         sudo(cmd, user=env.useraccount)
-    require.python.package('virtualenvwrapper')
 
 
 def install_packages():
