@@ -1,11 +1,6 @@
 About
 -----
 
-Before use it, you must have a fabtools environement (see the home fabrecipes README.rst for fabtools installation)
-
-Utilization
-------
-
 This recipe, autoinstall a Archlinux distribution from a computer file configuration. Detailled step autoinstallation
 Installation:
 
@@ -35,5 +30,33 @@ Installation:
 
 * **Bonus autoinstallation**
   
-  * Dotfiles synchronisation
   * Install your environement
+  * Dotfiles synchronisation
+ 
+
+Utilization
+-----------
+
+Before use it, you must have a fabtools environement (see the home fabrecipes README.rst for fabtools installation)
+
+**Prepare SSH connexion from ISO install**
+
+
+.. code-block:: console
+
+   $ loadkeys fr
+   $ passwd
+   $ systemctl start sshd
+   $ ip addr # show IP ISO install
+
+**Lauch installation from another PC**
+
+from another PC execute this two lines for automatic installation in ``root@hostname``
+
+.. code-block:: console
+
+   $ fab -f autoinstall/archlinux.py -H root@hostname computer_sample install
+   [ ..  reboot your system ]
+   $ fab -f autoinstall/archlinux.py -H root@hostname computer_sample configure env_i3 sync_dotfiles
+   
+Well, you have now a fresh installation with a encrypted /home folder and i3 environment
