@@ -13,6 +13,8 @@ def computer_sample():
     env.locale = 'fr_FR.UTF-8'
     env.charset = 'UTF-8'
     env.keymap = 'fr-pc'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
     env.pkgs = ['virtualbox-guest-utils']
@@ -59,6 +61,8 @@ def jsl_acerone():
     env.locale = 'fr_FR.UTF-8'
     env.charset = 'UTF-8'
     env.keymap = 'fr-pc'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
     env.pkgs = ['xf86-video-intel', 'xf86-input-synaptics']
