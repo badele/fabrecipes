@@ -174,11 +174,10 @@ def env_xorg_base(direct=True):
         'xorg-xprop',
         'xorg-xrdb',
         'xterm',
-        'slim',
-        'slim-themes',
         'gksu',
         'arandr',
         'xdotool',
+        'xorg-server-utils',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
@@ -197,10 +196,34 @@ def env_xorg_i3(direct=True):
         'i3status',
         'dmenu',
         'xautolock',
+        'slim',
+        'slim-themes',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         install_packages()
+
+    # Configure slim
+    slim_file = '/etc/slim.conf'
+    # Set i3 session
+    comment(slim_file, '^sessions            xfce4,')
+    append(slim_file, 'sessions  i3')
+    # default user
+    append(slim_file, 'default_user  %s' % env.useraccount)
+    # Active numlock
+    uncomment(slim_file, '# numlock')
+
+    # Xorg keymap
+    keymap_file = '/etc/X11/xorg.conf.d/10-keyboard-layout.conf'
+    append(keymap_file, 'Section "InputClass"')
+    append(keymap_file, '  Identifier         "Keyboard Layout"')
+    append(keymap_file, '  MatchIsKeyboard    "yes"')
+    append(keymap_file, '  MatchDevicePath    "/dev/input/event*"')
+    append(keymap_file, '  Option             "XkbLayout"  "%s"' %
+           env.xkblayout)
+    append(keymap_file, '  Option             "XkbVariant" "%s"' %
+           env.xkbvariant)
+    append(keymap_file, 'EndSection')
 
 
 @task
@@ -404,10 +427,9 @@ def require_locale(locale, charset):
     Set locale
     """
     config_file = '/etc/locale.gen'
-    with watch(config_file):
-        uncomment(config_file, '%s %s  ' % (locale, charset))
-
+    uncomment(config_file, '%s %s' % (locale, charset))
     require.system.default_locale(locale)
+    run_as_root('locale-gen')
 
 
 def require_keymap(keymap):
@@ -416,7 +438,7 @@ def require_keymap(keymap):
     """
     conf = 'KEYMAP=%s' % keymap
     config_file = '/etc/vconsole.conf'
-    require_file(config_file, conf, use_sudo=True)
+    require_file(config_file, conf)
 
 
 def require_timezone(zone, city):
@@ -470,10 +492,10 @@ def require_yaourt_configuration():
     """
     config_file = '/etc/pacman.conf'
 
-    with watch(config_file, use_sudo=True) as config:
-        append(config_file, '[archlinuxfr]', use_sudo=True)
-        append(config_file, 'Server = http://repo.archlinux.fr/%s' % env.arch, use_sudo=True)
+    with watch(config_file) as config:
+        append(config_file, '[archlinuxfr]')
+        append(config_file, 'Server = http://repo.archlinux.fr/%s' % env.arch)
 
     if config.changed:
-        append(config_file, 'SigLevel = Optional', use_sudo=True)
+        append(config_file, 'SigLevel = Optional')
         arch.update_index()
