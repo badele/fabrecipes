@@ -7,14 +7,15 @@ from fabric.operations import prompt, reboot
 # Fabtools
 from fabtools.require import file as require_file
 from fabtools.utils import run_as_root
-from fabric.contrib.files import append, comment, sed
+from fabric.contrib.files import append, comment, uncomment, sed
 from fabtools.files import watch, is_dir, is_link
-
 from fabtools import require
 from fabtools import python
 from fabtools import system
 from fabtools import arch
 from fabtools import disk
+
+from computer import *
 
 """
    This script autoinstall a new Archlinux distribution
@@ -56,49 +57,6 @@ from fabtools import disk
      - Instal minimal packages
 
 """
-
-
-@task
-def computer_sample():
-    """
-    Sample computer configuration
-    """
-    env.hostname = 'sample-computer'
-    env.useraccount = 'badele'
-    env.dotfiles = 'https://github.com/badele/dotfiles.git'
-    env.locale = 'fr_FR.UTF-8'
-    env.charset = 'UTF-8'
-    env.keymap = 'fr-pc'
-    env.timezone_continent = 'Europe'
-    env.timezone_city = 'City'
-    env.xorg = ['virtualbox-guest-utils']
-    env.arch = 'x86_64'
-    env.disk = '/dev/sda'
-    env.part = {
-        'lvm': {'device': '/dev/sda3', 'ptype': 'Linux'},
-        '/': {
-            'device': '/dev/vg/root',
-            'ptype': 'Linux',
-            'ftype': 'ext4',
-            'size': '4g'
-        },
-        '/home': {
-            'device': '/dev/vg/home',
-            'ptype': 'Linux',
-            'ftype': 'ext4',
-            'size': '1.5g'
-        },
-        '/boot': {
-            'device': '/dev/sda1',
-            'ptype': 'Linux',
-            'ftype': 'ext2'
-        },
-        'swap': {
-            'device': '/dev/sda2',
-            'ptype': 'Linux swap / Solaris',
-            'ftype': 'swap'
-        },
-    }
 
 
 @task
@@ -449,7 +407,7 @@ def require_locale(locale, charset):
     """
     config_file = '/etc/locale.gen'
     with watch(config_file):
-        append(config_file, '%s %s' % (locale, charset))
+        uncomment(config_file, '%s %s  ' % (locale, charset))
 
     require.system.default_locale(locale)
 
