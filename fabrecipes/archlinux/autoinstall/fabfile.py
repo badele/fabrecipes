@@ -178,6 +178,7 @@ def env_xorg_base(direct=True):
         'arandr',
         'xdotool',
         'xorg-server-utils',
+        'alsa-utils',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
@@ -227,7 +228,7 @@ def env_xorg_i3(direct=True):
 
 
 @task
-def env_xorg_light(direct=True):
+def env_xorg_i3_lightweight(direct=True):
     """
     Install i3 with lightweight software
     """
@@ -235,7 +236,7 @@ def env_xorg_light(direct=True):
     pkgs = [
         'spacefm',
         'cifs-utils',
-        'gigolo',
+        #'gigolo',
         'zathura',
         'zathura-pdf-mupdf',
         'wicd',
