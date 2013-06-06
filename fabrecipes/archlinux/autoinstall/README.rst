@@ -60,9 +60,10 @@ from another PC execute this two lines for automatic installation in ``root@host
 
 .. code-block:: console
 
-   $ fab -f autoinstall/archlinux.py -H root@hostname computer_sample install
+   $ cd fabrecipes/archlinux/autoinstall
+   $ fab -H root@hostname computer_sample install
    [ ..  reboot your system ]
-   $ fab -f autoinstall/archlinux.py -H root@hostname computer_sample configure env_xorg_i3 sync_dotfiles:home
+   $ fab -H root@hostname computer_sample configure env_xorg_i3 sync_dotfiles:home
    
 Well, you have now a fresh installation with a encrypted /home folder and i3 environment
 
