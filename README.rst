@@ -35,16 +35,17 @@ and from another PC execute this two lines
 
 .. code-block:: console
 
-	$ fab -f autoinstall/archlinux.py -H root@hostname computer_sample install
+	$ cd fabrecipes/archlinux/autoinstall
+	$ fab -H root@hostname computer_sample install
 	[ ..  reboot your system ]
-	$ fab -f autoinstall/archlinux.py -H root@hostname computer_sample configure env_i3 sync_dotfiles
+	$ fab -H root@hostname computer_sample configure env_i3 sync_dotfiles
 	
 
-And if in the next day, you would like again synchronize your dotfiles, just execute
+And if in the next day, if you would like again synchronize your dotfiles, just execute
 
 .. code-block:: console
 
-	$ fab -f autoinstall/archlinux.py -H root@hostname sync_dotfiles
+	$ fab -H root@hostname sync_dotfiles:home
 
 
 For more informations about archlinux auto installation see https://github.com/badele/fabrecipes/blob/master/fabrecipes/archlinux/README.rst
