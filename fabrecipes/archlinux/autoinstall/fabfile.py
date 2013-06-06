@@ -135,7 +135,7 @@ def env_base(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
     python.get_python_location()
     require.python.pip()
@@ -158,7 +158,7 @@ def env_terminal(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
 
 @task
@@ -182,7 +182,7 @@ def env_xorg_base(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
 
 @task
@@ -202,7 +202,7 @@ def env_xorg_i3(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
     # Configure slim
     slim_file = '/etc/slim.conf'
@@ -247,7 +247,7 @@ def env_xorg_i3_lightweight(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
 
 @task
@@ -269,7 +269,7 @@ def env_xorg_misc(direct=True):
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
-        install_packages()
+        require.arch.packages(env.pkgs)
 
 
 @task
@@ -307,13 +307,6 @@ def sync_dotfiles(workspace):
     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
         sudo(cmd, user=env.useraccount)
-
-
-def install_packages():
-    """
-    Install all packages in env.pkgs variable
-    """
-    require.arch.packages(env.pkgs)
 
 
 def run_on_archroot(cmd):
