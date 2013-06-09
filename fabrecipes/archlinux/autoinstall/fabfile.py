@@ -11,6 +11,7 @@ from fabric.contrib.files import append, comment, uncomment, sed
 from fabtools.files import watch, is_dir, is_link
 from fabtools import require
 from fabtools import python
+from fabtools import systemd
 from fabtools import system
 from fabtools import arch
 from fabtools import disk
@@ -104,7 +105,9 @@ def configure():
     if not 'hostname' in env:
         abort("Please select profil computer")
 
-    run_as_root('systemctl enable sshd')
+    #run_as_root('systemctl enable sshd')
+    systemd.enable('sshd')
+    systemd.enable('wicd')
     require.system.hostname(env.hostname)
     require_locale(env.locale, env.charset)
     require_keymap(env.keymap)
@@ -137,9 +140,9 @@ def env_base(direct=True):
     if direct:
         require.arch.packages(env.pkgs)
 
-    python.get_python_location()
     require.python.pip()
-    require.python.package(['virtualenv', 'virtualenvwrapper'])
+    require.python.package('virtualenv')
+    require.python.package('virtualenvwrapper')
 
 
 @task
@@ -155,6 +158,7 @@ def env_terminal(direct=True):
         'rxvt-unicode',
         'terminus-font',
         'mc',
+        'wicd',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
@@ -179,10 +183,15 @@ def env_xorg_base(direct=True):
         'xdotool',
         'xorg-server-utils',
         'alsa-utils',
+        'slim',
+        'slim-themes',
+        'wicd-gtk',
+
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_xorg()
 
 
 @task
@@ -197,55 +206,57 @@ def env_xorg_i3(direct=True):
         'i3status',
         'dmenu',
         'xautolock',
-        'slim',
-        'slim-themes',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_xorg()
 
-    # Configure slim
-    slim_file = '/etc/slim.conf'
-    # Set i3 session
-    comment(slim_file, '^sessions            xfce4,')
-    append(slim_file, 'sessions  i3')
-    # default user
-    append(slim_file, 'default_user  %s' % env.useraccount)
-    # Active numlock
-    uncomment(slim_file, '# numlock')
 
-    # Xorg keymap
-    keymap_file = '/etc/X11/xorg.conf.d/10-keyboard-layout.conf'
-    append(keymap_file, 'Section "InputClass"')
-    append(keymap_file, '  Identifier         "Keyboard Layout"')
-    append(keymap_file, '  MatchIsKeyboard    "yes"')
-    append(keymap_file, '  MatchDevicePath    "/dev/input/event*"')
-    append(keymap_file, '  Option             "XkbLayout"  "%s"' %
-           env.xkblayout)
-    append(keymap_file, '  Option             "XkbVariant" "%s"' %
-           env.xkbvariant)
-    append(keymap_file, 'EndSection')
+# @task
+# def env_xorg_i3_lightweight(direct=True):
+#     """
+#     Install i3 with lightweight software
+#     """
+#     env_xorg_i3(False)
+#     pkgs = [
+#         'spacefm',
+#         'cifs-utils',
+#         #'gigolo',
+#         'zathura',
+#         'zathura-pdf-mupdf',
+#         'volumeicon',
+#         'parcellite',
+#         'feh',
+#     ]
+#     env.pkgs = list(set(env.pkgs + pkgs))
+#     if direct:
+#         require.arch.packages(env.pkgs)
+#         configure_xorg()
 
 
 @task
-def env_xorg_i3_lightweight(direct=True):
+def env_xorg_xfce(direct=True):
     """
-    Install i3 with lightweight software
+    Install xorg with i3 feature
     """
-    env_xorg_i3(False)
-    pkgs = [
-        'spacefm',
-        'cifs-utils',
-        #'gigolo',
-        'zathura',
-        'zathura-pdf-mupdf',
-        'wicd',
-        'wicd-gtk',
-        'volumeicon',
-        'parcellite',
-        'feh',
-    ]
-    env.pkgs = list(set(env.pkgs + pkgs))
+    env_xorg_base(False)
+
+    if not arch.is_installed('xfce4-systemload-plugin') and \
+       not arch.is_installed('xfce4-wavelan-plugin'):
+        pkgs = [
+            'xfce4',
+            #'xfce4-goodies',
+            'xfce-theme-manager',
+            'xfce-theme-albatross',
+            'gtk-engine-unico',
+            'elementary-xfce-icons',
+            'shimmer-wallpapers',
+            'gvfs',
+            'gvfs-smb',
+        ]
+        env.pkgs = list(set(env.pkgs + pkgs))
+
     if direct:
         require.arch.packages(env.pkgs)
 
@@ -256,10 +267,9 @@ def env_xorg_misc(direct=True):
     Full Xorg installation
     (Xorg + i3 + lighweight + misc software)
     """
-    env_xorg_light(False)
+    env_xorg_base(False)
     pkgs = [
-        'alsa-utils',
-        'chromium',
+        'firefox',
         'flashplugin',
         'remmina',
         'freerdp',
@@ -270,6 +280,7 @@ def env_xorg_misc(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_xorg()
 
 
 @task
@@ -307,6 +318,33 @@ def sync_dotfiles(workspace):
     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
         sudo(cmd, user=env.useraccount)
+
+
+def configure_xorg():
+    # Xorg keymap
+    keymap_file = '/etc/X11/xorg.conf.d/10-keyboard-layout.conf'
+    append(keymap_file, 'Section "InputClass"')
+    append(keymap_file, '  Identifier         "Keyboard Layout"')
+    append(keymap_file, '  MatchIsKeyboard    "yes"')
+    append(keymap_file, '  MatchDevicePath    "/dev/input/event*"')
+    append(keymap_file, '  Option             "XkbLayout"  "%s"' %
+           env.xkblayout)
+    append(keymap_file, '  Option             "XkbVariant" "%s"' %
+           env.xkbvariant)
+    append(keymap_file, 'EndSection')
+
+    # Configure slim
+    slim_file = '/etc/slim.conf'
+    # Set sessions
+    comment(slim_file, '^sessions +xfce4,')
+    append(slim_file, 'sessions %s' % env.xsessions)
+    # default user
+    comment(slim_file, '^auto_login')
+    append(slim_file, 'auto_login %s' % env.xautologin)
+    append(slim_file, 'default_user  %s' % env.useraccount)
+    # Active numlock
+    uncomment(slim_file, '# numlock')
+    systemd.enable('slim')
 
 
 def run_on_archroot(cmd):
