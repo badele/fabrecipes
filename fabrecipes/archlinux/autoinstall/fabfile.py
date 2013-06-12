@@ -106,8 +106,6 @@ def configure():
         abort("Please select profil computer")
 
     #run_as_root('systemctl enable sshd')
-    systemd.enable('sshd')
-    systemd.enable('wicd')
     require.system.hostname(env.hostname)
     require_locale(env.locale, env.charset)
     require_keymap(env.keymap)
@@ -115,6 +113,7 @@ def configure():
     require_internet()
     require_yaourt_configuration()
     require.users.user(env.useraccount, shell='/usr/bin/zsh')
+    require.users.sudoer(env.useraccount, passwd=True)
     env_base()
 
 
@@ -139,10 +138,7 @@ def env_base(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
-
-    require.python.pip()
-    require.python.package('virtualenv')
-    require.python.package('virtualenvwrapper')
+        configure_base()
 
 
 @task
@@ -163,6 +159,8 @@ def env_terminal(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_base()
+        configure_terminal()
 
 
 @task
@@ -191,7 +189,9 @@ def env_xorg_base(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_base()
         configure_xorg()
+        configure_terminal()
 
 
 @task
@@ -210,7 +210,9 @@ def env_xorg_i3(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_base()
         configure_xorg()
+        configure_terminal()
 
 
 # @task
@@ -259,6 +261,9 @@ def env_xorg_xfce(direct=True):
 
     if direct:
         require.arch.packages(env.pkgs)
+        configure_base()
+        configure_xorg()
+        configure_terminal()
 
 
 @task
@@ -280,7 +285,9 @@ def env_xorg_misc(direct=True):
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
         require.arch.packages(env.pkgs)
+        configure_base()
         configure_xorg()
+        configure_terminal()
 
 
 @task
@@ -318,6 +325,17 @@ def sync_dotfiles(workspace):
     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
         sudo(cmd, user=env.useraccount)
+
+
+def configure_base():
+    require.python.pip()
+    require.python.package('virtualenv')
+    require.python.package('virtualenvwrapper')
+
+
+def configure_terminal():
+    systemd.enable('sshd')
+    systemd.enable('wicd')
 
 
 def configure_xorg():
@@ -527,6 +545,10 @@ def require_yaourt_configuration():
     with watch(config_file) as config:
         append(config_file, '[archlinuxfr]')
         append(config_file, 'Server = http://repo.archlinux.fr/%s' % env.arch)
+
+        if env.arch == 'x86_64':
+            append(config_file, '[multilib]')
+            append(config_file, 'Include = /etc/pacman.d/mirrorlist # multilib')
 
     if config.changed:
         append(config_file, 'SigLevel = Optional')

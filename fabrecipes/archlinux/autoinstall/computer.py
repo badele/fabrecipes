@@ -12,7 +12,7 @@ from fabtools.files import watch, is_dir, is_link
 
 
 @task
-def computer_sample():
+def computer_virtualbox():
     """
     Sample computer configuration
     """
@@ -22,7 +22,7 @@ def computer_sample():
     env.locale = 'fr_FR.UTF-8'
     env.charset = 'UTF-8'
     env.keymap = 'fr-pc'
-    env.xsessions = 'i3, xfce'
+    env.xsessions = 'xfce, i3'
     env.xautologin = 'yes'
     env.xkblayout = 'fr'
     env.xkbvariant = 'latin9'
@@ -59,13 +59,13 @@ def computer_sample():
 
 
 @task
-def jsl_acerone():
+def jsl_acer_inspire_one():
     """
     Acer Aspire One netbook
     installed on xx minutes
     cd fabrecipes/archlinux/autoinstall
-    fab -H root@hostname jsl_acerone install
-    fab -H root@hostname jsl_acerone configure env_xorg_i3 env_xorg_xfce
+    fab -H root@hostname jsl_acer_inspireone install
+    fab -H root@hostname jsl_acer_inspireone configure env_xorg_i3 env_xorg_xfce
     """
     env.hostname = 'acerone'
     env.useraccount = 'badele'
@@ -112,9 +112,61 @@ def jsl_acerone():
         },
     }
 
+@task
+def jsl_vaio_vgn_ns21s():
+    """
+    Sony Vaio VGN-NS21S netbook
+    installed on xx minutes
+    cd fabrecipes/archlinux/autoinstall
+    fab -H root@hostname jsl_vaio_vgn_ns21s install
+    fab -H root@hostname jsl_vaio_vgn_ns21s configure env_xorg_i3 env_xorg_xfce
+    """
+    env.hostname = 'vaio'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
+    env.keymap = 'fr-pc'
+    env.xsessions = 'xfce, i3'
+    env.xautologin = 'yes'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'City'
+    env.pkgs = [
+        'xf86-video-ati',
+    ]
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        'lvm': {'device': '/dev/sda4', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '30g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '180g'
+        },
+        '/boot': {
+            'device': '/dev/sda2',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda3',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
+    }
+
 
 @task
-def fix_acerone():
+def fix_acer_inspireone():
     """
     Fix for Acer Aspire One netbook
     - set xorg modesetting
