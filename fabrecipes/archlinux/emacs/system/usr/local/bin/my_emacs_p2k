@@ -1,0 +1,6 @@
+#!/bin/bash
+
+source /usr/bin/virtualenvwrapper.sh
+
+workon emacs_p2k
+emacs -l .emacs_p2k/.emacs.el $* &
