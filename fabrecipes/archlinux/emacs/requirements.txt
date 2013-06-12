@@ -1,0 +1,14 @@
+logilab-astng==0.24.1
+logilab-common==0.58.3
+pep8==1.4
+pyflakes==0.5.0
+pylint==0.26.0
+
+# pour wanted
+PIL==1.1.7
+
+# pour cacause
+Flask==0.9
+Jinja2==2.6
+Werkzeug==0.8.3
+wsgiref==0.1.2
