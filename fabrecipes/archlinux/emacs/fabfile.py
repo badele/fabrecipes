@@ -21,7 +21,7 @@ from fabtools import disk
 
 """
    This script install emacs with :
-   - Installation in virtualenv with Python3
+   - Installation in virtualenv with Python2
    - el.get feature
 """
 
@@ -29,7 +29,7 @@ from fabtools import disk
 @task
 def install_p2k():
     """
-    Install base system
+    Install emacs with some features in python 2.7 environement
     """
     if 'pkgs' not in env:
         env.pkgs = []
