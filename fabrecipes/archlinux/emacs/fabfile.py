@@ -1,23 +1,12 @@
 import os
 
 # Fabric
-from fabric.api import settings, env, task, sudo
-from fabric.utils import abort
-from fabric.colors import red
-from fabric.operations import prompt, reboot, put
-
+from fabric.api import env, task
+from fabric.operations import put
 # Fabtools
-from fabtools.require import file as require_file
 from fabtools.utils import run_as_root
-from fabric.contrib.files import append, comment, uncomment, sed
-from fabtools.files import watch, is_dir, is_link
 from fabtools import require
 from fabtools import python
-from fabtools import system
-from fabtools import arch
-from fabtools import disk
-
-#from computer import *
 
 """
    This script install emacs with :
