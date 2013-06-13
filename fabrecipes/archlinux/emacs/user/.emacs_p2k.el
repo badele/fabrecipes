@@ -15,7 +15,7 @@
 
 ;; Liste des paquets a installer
 (setq my:el-get-packages
-      '(virtualenv
+      '(
         magit
         auto-complete
         yasnippet
