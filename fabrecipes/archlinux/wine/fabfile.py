@@ -21,8 +21,10 @@ from fabtools import disk
 
 """
    This script install wine with :
-   - configure wine in 32 bits
-   - install flash11
+   - install required libraries
+   - configure wine
+   - install firefox 11
+   - install flash player 11
 """
 
 
@@ -48,5 +50,5 @@ def install():
     require.arch.packages(pkgs)
 
     run('winecfg')
-    cmd = 'winetricks firefox flash11'
-    run('export DISPLAY=:0 && %s' % cmd)
+    cmd = 'WINEPREFIX=/home/badele/.wine winetricks firefox flash11'
+    run('DISPLAY=:0 %s' % cmd)
