@@ -4,6 +4,15 @@ pep8==1.4
 pyflakes==0.5.0
 pylint==0.26.0
 
+
+####################
+# Dev developpement
+####################
+
+# Fabric
+Fabric==1.6.0
+fabtools==0.14.0
+
 # pour wanted
 PIL==1.1.7
 
