@@ -175,6 +175,7 @@ def env_xorg_base(direct=True):
         'xorg-xev',
         'xorg-xprop',
         'xorg-xrdb',
+        'xorg-xkill',
         'xterm',
         'gksu',
         'arandr',
