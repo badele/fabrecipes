@@ -53,5 +53,3 @@ def install():
     run('winecfg')
     cmd = 'WINEPREFIX=/home/badele/.wine winetricks firefox flash11'
     run('DISPLAY=:0 %s' % cmd)
-
-print("IMPORTED wine")
