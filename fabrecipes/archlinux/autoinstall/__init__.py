@@ -293,41 +293,41 @@ def env_xorg_misc(direct=True):
         configure_terminal()
 
 
-@task
-def sync_dotfiles(workspace):
-    dst = '/home/%(useraccount)s/dotfiles' % env
-    cloned = False
+# @task
+# def sync_dotfiles(workspace):
+#     dst = '/home/%(useraccount)s/dotfiles' % env
+#     cloned = False
 
-    # Clone if not exists
-    if not is_dir(dst):
-        cmd = 'cd ; git clone %(dotfiles)s' % env
-        sudo(cmd, user=env.useraccount)
-        cloned = True
+#     # Clone if not exists
+#     if not is_dir(dst):
+#         cmd = 'cd ; git clone %(dotfiles)s' % env
+#         sudo(cmd, user=env.useraccount)
+#         cloned = True
 
-    # Pull dotfiles project
-    if not cloned:
-        # Mise a jours des sources
-        cmd = 'cd ~/dotfiles ; git pull'
-        sudo(cmd, user=env.useraccount)
+#     # Pull dotfiles project
+#     if not cloned:
+#         # Mise a jours des sources
+#         cmd = 'cd ~/dotfiles ; git pull'
+#         sudo(cmd, user=env.useraccount)
 
-    # Synchronize system
-    cmd = 'rsync -avr --exclude ".git/" %(dst)s/system/ /' % locals()
-    run_as_root(cmd)
+#     # Synchronize system
+#     cmd = 'rsync -avr --exclude ".git/" %(dst)s/system/ /' % locals()
+#     run_as_root(cmd)
 
-    # Synchronize user
-    cmd = 'rsync -avr --exclude ".git/" --cvs-exclude %(dst)s/user/ ~/' % locals()
-    sudo(cmd, user=env.useraccount)
+#     # Synchronize user
+#     cmd = 'rsync -avr --exclude ".git/" --cvs-exclude %(dst)s/user/ ~/' % locals()
+#     sudo(cmd, user=env.useraccount)
 
-    # Configure i3 with workspace
-    if is_link('/home/%(useraccount)s/.i3/config' % env):
-        sudo('rm ~/.i3/config', user=env.useraccount)
-    cmd = 'ln -s ~/.i3/config_%(workspace)s ~/.i3/config' % locals()
-    sudo(cmd, user=env.useraccount)
+#     # Configure i3 with workspace
+#     if is_link('/home/%(useraccount)s/.i3/config' % env):
+#         sudo('rm ~/.i3/config', user=env.useraccount)
+#     cmd = 'ln -s ~/.i3/config_%(workspace)s ~/.i3/config' % locals()
+#     sudo(cmd, user=env.useraccount)
 
-    # Configure ZSH
-    if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
-        cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
-        sudo(cmd, user=env.useraccount)
+#     # Configure ZSH
+#     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
+#         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
+#         sudo(cmd, user=env.useraccount)
 
 
 def configure_base():
