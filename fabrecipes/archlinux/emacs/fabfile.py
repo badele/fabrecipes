@@ -1,1 +1,1 @@
-from fabrecipes.archlinux import emacs
+from fabrecipes.archlinux.emacs import *

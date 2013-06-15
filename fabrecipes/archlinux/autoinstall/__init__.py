@@ -16,6 +16,8 @@ from fabtools import system
 from fabtools import arch
 from fabtools import disk
 
+# Fabrecipes
+from fabrecipes.commons import dotfiles
 from fabrecipes.archlinux.autoinstall import computer
 
 """

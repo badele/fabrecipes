@@ -17,7 +17,8 @@ from fabtools import system
 from fabtools import arch
 from fabtools import disk
 
-#from computer import *
+# Fabrecipes
+from fabrecipes.commons import dotfiles
 
 """
    This script install wine with :
