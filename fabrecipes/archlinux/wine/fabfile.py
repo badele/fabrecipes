@@ -1,1 +1,1 @@
-from fabrecipes.archlinux import wine
+from fabrecipes.archlinux.wine import *

@@ -1,0 +1,1 @@
+from fabrecipes.archlinux import *
