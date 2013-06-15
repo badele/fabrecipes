@@ -12,7 +12,7 @@ from fabtools.files import watch, is_dir, is_link
 
 
 @task
-def computer_virtualbox():
+def virtualbox():
     """
     Sample computer configuration
     """
@@ -59,7 +59,7 @@ def computer_virtualbox():
 
 
 @task
-def jsl_acer_inspire_one():
+def jsl_acer_inspireone():
     """
     Acer Aspire One netbook
     installed on xx minutes
@@ -166,7 +166,7 @@ def jsl_vaio_vgn_ns21s():
 
 
 @task
-def fix_acer_inspireone():
+def jsl_acer_inspireone_fix():
     """
     Fix for Acer Aspire One netbook
     - set xorg modesetting
