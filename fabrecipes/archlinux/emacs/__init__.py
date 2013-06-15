@@ -65,14 +65,5 @@ def install_p2k():
         )
 
     # Synchronize user
-    require.files.directory('.emacs_p2k')
-    put('%(here)s/user/.emacs_p2k.el' % locals(),
-        '~/.emacs_p2k/.emacs.el',
-        )
-
-    # Synchronize system
-    put('%(here)s/system/usr/local/bin/my_emacs_p2k' % locals(),
-        '/usr/local/bin',
-        use_sudo=True,
-        )
-    run_as_root('chown root:root /usr/local/bin/my_emacs_p2k && chmod 0755 /usr/local/bin/my_emacs_p2k')
+    dotfiles.sync('fabrecipes/emacs/emacs_p2k/user/', '$HOME/')
+    dotfiles.sync('fabrecipes/emacs/emacs_p2k/sys/', '/', use_sudo='true')
