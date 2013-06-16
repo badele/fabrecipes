@@ -30,7 +30,7 @@ def install():
     ]
     require.arch.packages(pkgs)
 
-    project_root = '$HOME/project'
+    project_root = '$HOME/projects'
     project_name = 'rstblog'
     use_python = 'python2.7'
     virtualenv = '.virtualenvs/rstblog'
