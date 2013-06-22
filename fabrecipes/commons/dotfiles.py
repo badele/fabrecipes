@@ -13,8 +13,10 @@ def fetch(git=''):
     Clone dotfiles project to ~/dotfiles
     """
     cloned = False
-    # Check project is already cloned
+    if 'dotfiles' in env:
+        git = env.dotfiles
 
+    # Check project is already cloned
     if git != '' and not is_dir('/home/%(user)s/dotfiles' % env):
         cmd = 'cd ; git clone %(git)s' % locals()
         run(cmd)
@@ -25,7 +27,7 @@ def fetch(git=''):
     if not cloned and not is_dir(dotfiles):
         abort(red("Please execute dotfiles.fetch"))
 
-    cmd = 'cd (%dotfiles)s ; git pull' % locals()
+    cmd = 'cd %(dotfiles)s ; git pull' % locals()
     run(cmd)
 
 
@@ -41,8 +43,10 @@ def sync(src, dst, use_sudo='false'):
 
     # Synchronize system
     dotfiles = '/home/%(user)s/dotfiles' % env
-    cmd = 'rsync -avr --exclude ".git/" "%(dotfiles)s/%(src)s" "%(dst)s"' % locals()
-    if use_sudo:
-        sudo(cmd)
-    else:
-        run(cmd)
+    env_dotfiles = '%(dotfiles)s/%(src)s' % locals()
+    if is_dir(env_dotfiles):
+        cmd = 'rsync -avr --exclude ".git/" "%(env_dotfiles)s" "%(dst)s"' % locals()
+        if use_sudo:
+            sudo(cmd)
+        else:
+            run(cmd)
