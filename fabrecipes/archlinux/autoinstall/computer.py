@@ -28,7 +28,9 @@ def virtualbox():
     env.xkbvariant = 'latin9'
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
-    env.pkgs = ['virtualbox-guest-utils']
+    env.pkgs = {
+        'env_org': ['virtualbox-guest-utils']
+    }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
     env.part = {

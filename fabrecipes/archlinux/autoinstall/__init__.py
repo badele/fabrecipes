@@ -1,20 +1,24 @@
+import inspect
+
 # Fabric
-from fabric.api import settings, env, task, sudo
+from fabric.api import settings, env, task, sudo, run
 from fabric.utils import abort
 from fabric.colors import red
 from fabric.operations import prompt, reboot
+from fabric.contrib.files import append, comment, uncomment, sed
 
 # Fabtools
 from fabtools.require import file as require_file
 from fabtools.utils import run_as_root
-from fabric.contrib.files import append, comment, uncomment, sed
 from fabtools.files import watch, is_dir, is_link
-from fabtools import require
-from fabtools import python
-from fabtools import systemd
-from fabtools import system
 from fabtools import arch
 from fabtools import disk
+from fabtools import python
+from fabtools import require
+from fabtools import systemd
+from fabtools import system
+from fabtools import user
+
 
 # Fabrecipes
 from fabrecipes.commons import dotfiles
@@ -114,63 +118,60 @@ def configure():
     require_timezone(env.timezone_continent, env.timezone_city)
     require_internet()
     require_yaourt_configuration()
-    require.users.user(env.useraccount, shell='/usr/bin/zsh')
+    require.users.user(env.useraccount)
     require.users.sudoer(env.useraccount, passwd=True)
-    env_base()
 
 
 @task
-def env_base(direct=True):
+def env_base(direct=True, sync_dotfiles='fabrecipes'):
     """
     Install base system
     """
-    if 'pkgs' not in env:
-        env.pkgs = []
-
     pkgs = [
         'zsh',
         'yaourt',
-        'wget',
-        'git',
-        'rsync',
-        'sudo',
-        'net-tools',
-        'python2'
-    ]
-    env.pkgs = list(set(env.pkgs + pkgs))
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-
-
-@task
-def env_terminal(direct=True):
-    """
-    Install with terminal customization
-    """
-    env_base(False)
-    pkgs = [
+        'python2',
         'tmux',
-        'zsh',
-        'screenfetch',
-        'rxvt-unicode',
-        'terminus-font',
-        'mc',
+        'net-tools',
+        'wget',
         'wicd',
     ]
-    env.pkgs = list(set(env.pkgs + pkgs))
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-        configure_terminal()
+
+    # Check if a custom package for computer
+    env_section = inspect.stack()[0][3]
+    if 'pkgs' in env and env_section in env.pkgs:
+        pkgs = list(set(pkgs + env.pkgs[env_section]))
+
+    # Install required packages
+    require.arch.packages(pkgs)
+
+    # Install oh-my-zsh
+    ohmyzsh = '$HOME/.oh-my-zsh'
+    if not is_dir(ohmyzsh):
+        run(
+            'git clone git://github.com/robbyrussell/oh-my-zsh.git %(ohmyzsh)s'
+            % locals()
+        )
+
+    # Set default ZSH shell for user
+    if user.exists(env.useraccount):
+        user.modify(env.useraccount, shell='/usr/bin/zsh')
+
+    # Synchronize user dotfiles
+
+    sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
+
+    # Configure base
+    configure_base()
 
 
 @task
-def env_xorg_base(direct=True):
+def env_xorg():
     """
     Install base Xorg system
     """
-    env_terminal(False)
     pkgs = [
         'xorg-server',
         'xorg-xinit',
@@ -189,16 +190,20 @@ def env_xorg_base(direct=True):
         'wicd-gtk',
 
     ]
-    env.pkgs = list(set(env.pkgs + pkgs))
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-        configure_xorg()
-        configure_terminal()
+    # Check if a custom package for computer
+    env_section = inspect.stack()[0][3]
+    if 'pkgs' in env and env_section in env.pkgs:
+        pkgs = list(set(pkgs + env.pkgs[env_section]))
+
+    # Install required packages
+    require.arch.packages(pkgs)
+
+    # Configure_xorg
+    configure_xorg()
 
 
 @task
-def env_xorg_i3(direct=True):
+def env_xorg_i3():
     """
     Install xorg with i3 feature
     """
@@ -210,34 +215,13 @@ def env_xorg_i3(direct=True):
         'dmenu',
         'xautolock',
     ]
-    env.pkgs = list(set(env.pkgs + pkgs))
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-        configure_xorg()
-        configure_terminal()
+    # Check if a custom package for computer
+    env_section = inspect.stack()[0][3]
+    if 'pkgs' in env and env_section in env.pkgs:
+        pkgs = list(set(pkgs + env.pkgs[env_section]))
 
-
-# @task
-# def env_xorg_i3_lightweight(direct=True):
-#     """
-#     Install i3 with lightweight software
-#     """
-#     env_xorg_i3(False)
-#     pkgs = [
-#         'spacefm',
-#         'cifs-utils',
-#         #'gigolo',
-#         'zathura',
-#         'zathura-pdf-mupdf',
-#         'volumeicon',
-#         'parcellite',
-#         'feh',
-#     ]
-#     env.pkgs = list(set(env.pkgs + pkgs))
-#     if direct:
-#         require.arch.packages(env.pkgs)
-#         configure_xorg()
+    # Install required packages
+    require.arch.packages(pkgs)
 
 
 @task
@@ -293,50 +277,15 @@ def env_xorg_misc(direct=True):
         configure_terminal()
 
 
-# @task
-# def sync_dotfiles(workspace):
-#     dst = '/home/%(useraccount)s/dotfiles' % env
-#     cloned = False
-
-#     # Clone if not exists
-#     if not is_dir(dst):
-#         cmd = 'cd ; git clone %(dotfiles)s' % env
-#         sudo(cmd, user=env.useraccount)
-#         cloned = True
-
-#     # Pull dotfiles project
-#     if not cloned:
-#         # Mise a jours des sources
-#         cmd = 'cd ~/dotfiles ; git pull'
-#         sudo(cmd, user=env.useraccount)
-
-#     # Synchronize system
-#     cmd = 'rsync -avr --exclude ".git/" %(dst)s/system/ /' % locals()
-#     run_as_root(cmd)
-
-#     # Synchronize user
-#     cmd = 'rsync -avr --exclude ".git/" --cvs-exclude %(dst)s/user/ ~/' % locals()
-#     sudo(cmd, user=env.useraccount)
-
-#     # Configure i3 with workspace
-#     if is_link('/home/%(useraccount)s/.i3/config' % env):
-#         sudo('rm ~/.i3/config', user=env.useraccount)
-#     cmd = 'ln -s ~/.i3/config_%(workspace)s ~/.i3/config' % locals()
-#     sudo(cmd, user=env.useraccount)
-
-#     # Configure ZSH
-#     if not is_dir('/home/%(useraccount)s/.oh-my-zsh' % env):
-#         cmd = 'cd ; git clone https://github.com/rkj/oh-my-zsh ~/.oh-my-zsh'  # Fix rkj theme problem
-#         sudo(cmd, user=env.useraccount)
-
-
 def configure_base():
-    require.python.pip()
-    require.python.package('virtualenv')
-    require.python.package('virtualenvwrapper')
+    # Configure python environement
+    use_python = 'python2.7'
+    require.python.pip(use_python=use_python)
+    require.python.package('virtualenv', use_python=use_python, use_sudo=True)
+    require.python.package('virtualenvwrapper', use_python=use_python, use_sudo=True)
 
-
-def configure_terminal():
+    # Active service
+    systemd.enable('dhcpcd')
     systemd.enable('sshd')
     systemd.enable('wicd')
 
@@ -344,27 +293,27 @@ def configure_terminal():
 def configure_xorg():
     # Xorg keymap
     keymap_file = '/etc/X11/xorg.conf.d/10-keyboard-layout.conf'
-    append(keymap_file, 'Section "InputClass"')
-    append(keymap_file, '  Identifier         "Keyboard Layout"')
-    append(keymap_file, '  MatchIsKeyboard    "yes"')
-    append(keymap_file, '  MatchDevicePath    "/dev/input/event*"')
+    append(keymap_file, 'Section "InputClass"', use_sudo=True)
+    append(keymap_file, '  Identifier         "Keyboard Layout"', use_sudo=True)
+    append(keymap_file, '  MatchIsKeyboard    "yes"', use_sudo=True)
+    append(keymap_file, '  MatchDevicePath    "/dev/input/event*"', use_sudo=True)
     append(keymap_file, '  Option             "XkbLayout"  "%s"' %
-           env.xkblayout)
+           env.xkblayout, use_sudo=True)
     append(keymap_file, '  Option             "XkbVariant" "%s"' %
-           env.xkbvariant)
-    append(keymap_file, 'EndSection')
+           env.xkbvariant, use_sudo=True)
+    append(keymap_file, 'EndSection', use_sudo=True)
 
     # Configure slim
     slim_file = '/etc/slim.conf'
     # Set sessions
-    comment(slim_file, '^sessions +xfce4,')
-    append(slim_file, 'sessions %s' % env.xsessions)
+    comment(slim_file, '^sessions +xfce4,', use_sudo=True)
+    append(slim_file, 'sessions %s' % env.xsessions, use_sudo=True)
     # default user
-    comment(slim_file, '^auto_login')
-    append(slim_file, 'auto_login %s' % env.xautologin)
-    append(slim_file, 'default_user  %s' % env.useraccount)
+    comment(slim_file, '^auto_login', use_sudo=True)
+    append(slim_file, 'auto_login %s' % env.xautologin, use_sudo=True)
+    append(slim_file, 'default_user  %s' % env.useraccount, use_sudo=True)
     # Active numlock
-    uncomment(slim_file, '# numlock')
+    uncomment(slim_file, '# numlock', use_sudo=True)
     systemd.enable('slim')
 
 
@@ -451,7 +400,7 @@ def install_base():
     """
     Install base system
     """
-    run_as_root('pacstrap /mnt base base-devel syslinux openssh')
+    run_as_root('pacstrap /mnt base base-devel syslinux openssh git rsync sudo')
     run_as_root('genfstab -U -p /mnt >> /mnt/etc/fstab')
 
 
@@ -547,6 +496,7 @@ def require_yaourt_configuration():
 
     with watch(config_file) as config:
         append(config_file, '[archlinuxfr]')
+        append(config_file, 'SigLevel = Never')
         append(config_file, 'Server = http://repo.archlinux.fr/%s' % env.arch)
 
         if env.arch == 'x86_64':
