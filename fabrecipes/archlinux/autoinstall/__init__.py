@@ -1,4 +1,5 @@
 import inspect
+from re import escape
 
 # Fabric
 from fabric.api import settings, env, task, sudo, run
@@ -158,7 +159,6 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
         user.modify(env.useraccount, shell='/usr/bin/zsh')
 
     # Synchronize user dotfiles
-
     sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
     dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
     dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
@@ -185,8 +185,6 @@ def env_xorg():
         'xdotool',
         'xorg-server-utils',
         'alsa-utils',
-        'slim',
-        'slim-themes',
         'wicd-gtk',
 
     ]
@@ -196,24 +194,63 @@ def env_xorg():
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
     # Install required packages
+    env_base()
     require.arch.packages(pkgs)
+
+    # Synchronize user dotfiles
+    sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
 
     # Configure_xorg
     configure_xorg()
 
 
 @task
-def env_xorg_i3():
+def env_xorg_xfce_i3():
     """
-    Install xorg with i3 feature
+    Install xorg xfce feature
     """
-    env_xorg_base(False)
+
+    # if not arch.is_installed('xfce4-power-manager') and \
+    #    not arch.is_installed('xfce4-wavelan-plugin'):
     pkgs = [
+        # XFCE
+        'exo',
+        'garcon',
+        'gtk2-xfce-engine',
+        'gtk3-xfce-engine',
+        'thunar',
+        'thunar-volman',
+        'tumbler',
+        'xfce4-appfinder',
+        'xfce4-mixer',
+        'xfce4-panel',
+        'xfce4-power-manager',
+        'xfce4-session',
+        'xfce4-settings',
+        'xfce4-terminal',
+        'xfconf',
+        'xfdesktop',
+        'xfwm4',
+        'xfwm4-themes',
+        #'xfce4-goodies',
+        #'xfce-theme-manager',
+        #'xfce-theme-albatross',
+        #'gtk-engine-unico',
+        #'elementary-xfce-icons',
+        #'shimmer-wallpapers',
+        #
+        # I3
         'i3-wm',
-        'i3lock',
         'i3status',
         'dmenu',
-        'xautolock',
+        #'i3lock',
+        #'xautolock',
+        #
+        # Commons
+        'gvfs',
+        'gvfs-smb',
     ]
     # Check if a custom package for computer
     env_section = inspect.stack()[0][3]
@@ -221,36 +258,16 @@ def env_xorg_i3():
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
     # Install required packages
+    env_xorg()
     require.arch.packages(pkgs)
 
+    # Synchronize user dotfiles
+    sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
 
-@task
-def env_xorg_xfce(direct=True):
-    """
-    Install xorg with i3 feature
-    """
-    env_xorg_base(False)
 
-    if not arch.is_installed('xfce4-systemload-plugin') and \
-       not arch.is_installed('xfce4-wavelan-plugin'):
-        pkgs = [
-            'xfce4',
-            #'xfce4-goodies',
-            'xfce-theme-manager',
-            'xfce-theme-albatross',
-            'gtk-engine-unico',
-            'elementary-xfce-icons',
-            'shimmer-wallpapers',
-            'gvfs',
-            'gvfs-smb',
-        ]
-        env.pkgs = list(set(env.pkgs + pkgs))
-
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-        configure_xorg()
-        configure_terminal()
+    configure_xfce_i3()
 
 
 @task
@@ -303,18 +320,22 @@ def configure_xorg():
            env.xkbvariant, use_sudo=True)
     append(keymap_file, 'EndSection', use_sudo=True)
 
-    # Configure slim
-    slim_file = '/etc/slim.conf'
-    # Set sessions
-    comment(slim_file, '^sessions +xfce4,', use_sudo=True)
-    append(slim_file, 'sessions %s' % env.xsessions, use_sudo=True)
-    # default user
-    comment(slim_file, '^auto_login', use_sudo=True)
-    append(slim_file, 'auto_login %s' % env.xautologin, use_sudo=True)
-    append(slim_file, 'default_user  %s' % env.useraccount, use_sudo=True)
-    # Active numlock
-    uncomment(slim_file, '# numlock', use_sudo=True)
-    systemd.enable('slim')
+
+def configure_xfce_i3():
+    hostname = env.hostname
+    username = env.useraccount
+
+    # Init XFCE sessions
+    prefix = '$HOME/.cache/sessions/xfce4-session'
+    src = '%(prefix)s-HOSTNAME:0' % locals()
+    session = '%(prefix)s-%(hostname)s:0' % locals()
+    run('mv "%(src)s" "%(session)s"' % locals())
+    sed(session, escape('{{USERNAME}}'), username)
+    sed(session, escape('{{HOSTNAME}}'), hostname)
+
+    # Autologin
+    autologin = '/etc/systemd/system/getty@tty1.service.d/autologin.conf'
+    sed(autologin, escape('{{USERNAME}}'), username, use_sudo=True)
 
 
 def run_on_archroot(cmd):
