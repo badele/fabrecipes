@@ -115,7 +115,7 @@ def jsl_acer_inspireone():
     }
 
 @task
-def jsl_vaio_vgn_ns21s():
+def vaio_vgn_ns21s():
     """
     Sony Vaio VGN-NS21S netbook
     installed on xx minutes
@@ -135,9 +135,9 @@ def jsl_vaio_vgn_ns21s():
     env.xkbvariant = 'latin9'
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
-    env.pkgs = [
-        'xf86-video-ati',
-    ]
+    env.pkgs = {
+        'env_xorg': ['xf86-video-ati']
+    }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
     env.part = {
