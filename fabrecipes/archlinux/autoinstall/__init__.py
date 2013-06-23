@@ -236,17 +236,17 @@ def env_xorg_xfce_i3():
         'xfwm4-themes',
         #'xfce4-goodies',
         #'xfce-theme-manager',
-        #'xfce-theme-albatross',
+        'xfce-theme-albatross',
         #'gtk-engine-unico',
-        #'elementary-xfce-icons',
-        #'shimmer-wallpapers',
+        'elementary-xfce-icons',
+        'shimmer-wallpapers',
         #
         # I3
         'i3-wm',
         'i3status',
         'dmenu',
-        #'i3lock',
-        #'xautolock',
+        'i3lock',
+        'xautolock',
         #
         # Commons
         'gvfs',
