@@ -20,11 +20,6 @@ from fabtools import systemd
 from fabtools import system
 from fabtools import user
 
-
-# Fabrecipes
-from fabrecipes.commons import dotfiles
-from fabrecipes import computer
-
 """
    This script autoinstall a new Archlinux distribution
    use 3 partitions

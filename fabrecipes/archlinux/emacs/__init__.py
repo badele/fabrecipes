@@ -8,9 +8,6 @@ from fabtools.utils import run_as_root
 from fabtools import require
 from fabtools import python
 
-# Fabrecipes
-from fabrecipes.commons import dotfiles
-
 """
    This script install emacs with :
    - Installation in virtualenv with Python2
