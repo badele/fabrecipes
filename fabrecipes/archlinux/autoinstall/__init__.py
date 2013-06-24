@@ -23,7 +23,7 @@ from fabtools import user
 
 # Fabrecipes
 from fabrecipes.commons import dotfiles
-from fabrecipes.archlinux.autoinstall import computer
+from fabrecipes import computer
 
 """
    This script autoinstall a new Archlinux distribution
