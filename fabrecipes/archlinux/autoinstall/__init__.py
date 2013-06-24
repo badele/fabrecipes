@@ -116,6 +116,7 @@ def configure():
     require_yaourt_configuration()
     require.users.user(env.useraccount)
     require.users.sudoer(env.useraccount, passwd=True)
+    set_user_password()
 
 
 @task
@@ -423,6 +424,11 @@ def install_base():
 def set_root_password():
     print(red("Define Root password"))
     run_on_archroot('passwd')
+
+
+def set_user_password():
+    print(red("Define %(useraccount)s password") % env)
+    run('passwd %(useraccount)s' % env)
 
 
 def reboot_system():
