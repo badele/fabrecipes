@@ -29,7 +29,10 @@ def virtualbox():
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
     env.pkgs = {
-        'env_org': ['virtualbox-guest-utils']
+        'env_org': [
+            'virtualbox-guest-utils',
+            'xf86-video-vesa',
+        ]
     }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
