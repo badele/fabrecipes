@@ -284,7 +284,7 @@ def env_xorg_misc(direct=True):
         'freerdp',
         'keepassx',
         'openvpn',
-        'xchat',
+        'hexchat',
     ]
     env.pkgs = list(set(env.pkgs + pkgs))
     if direct:
