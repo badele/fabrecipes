@@ -117,6 +117,7 @@ def jsl_acer_inspireone():
         },
     }
 
+
 @task
 def vaio_vgn_ns21s():
     """
@@ -139,7 +140,10 @@ def vaio_vgn_ns21s():
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
     env.pkgs = {
-        'env_xorg': ['xf86-video-ati']
+        'env_base': [
+            'lm_sensors'
+        ],
+        'env_xorg': ['xf86-video-ati', 'xfce4-sensors-plugin']
     }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
