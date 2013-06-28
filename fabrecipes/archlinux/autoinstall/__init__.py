@@ -530,5 +530,4 @@ def require_yaourt_configuration():
             append(config_file, 'Include = /etc/pacman.d/mirrorlist # multilib')
 
     if config.changed:
-        append(config_file, 'SigLevel = Optional')
         arch.update_index()
