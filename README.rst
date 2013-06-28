@@ -36,10 +36,12 @@ and from another PC execute this two lines
 .. code-block:: console
 
 	$ cd fabrecipes/archlinux/autoinstall
-	$ fab -H root@hostname computer_sample install
+	$ fab -H root@hostname  computer.virtualbox archlinux.autoinstall.install
 	[ ..  reboot your system ]
-	$ fab -H root@hostname computer_sample configure env_i3 sync_dotfiles
-	
+	$ fab -H root@hostname computer.virtualbox archlinux.autoinstall.configure
+	$ fab -H username@hostname archlinux.autoinstall.env_xorg_xfce_i3
+
+Note: For preventive, in your first installation on your computer, you can execute fab -H username@hostname archlinux.autoinstall.env_xorg instead of fab -H username@hostname archlinux.autoinstall.env_xorg_xfce_i3. This you permit fix X Windows problem (driver, screen resolution). after you have fixed and uploaded fix in your dotfiles direcctory, you will can in future, call fab -H username@hostname archlinux.autoinstall.env_xorg_xfce_i3
 
 And if in the next day, if you would like again synchronize your dotfiles, just execute
 
