@@ -10,7 +10,7 @@ Installation
 	
 	git clone https://github.com/badele/fabrecipes.git
 	cd fabrecipes
-	mkvirtualenv --no-site-packages fabtools
+	mkvirtualenv --no-site-packages -p python2.7 fabtools
 	workon fabtools
 	pip install -r requirements.txt
 
