@@ -174,6 +174,61 @@ def vaio_vgn_ns21s():
     }
 
 
+def hp_pavilion_g7():
+    """
+    HP Pavilion g7 Notebook PC
+    installed on xx minutes
+    cd fabrecipes/archlinux/autoinstall
+    fab -H root@hostname jsl_vaio_vgn_ns21s install
+    fab -H root@hostname jsl_vaio_vgn_ns21s configure env_xorg_i3 env_xorg_xfce
+    """
+    env.hostname = 'hp2012'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
+    env.keymap = 'fr-pc'
+    env.xsessions = 'xfce, i3'
+    env.xautologin = 'yes'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'City'
+    env.pkgs = {
+        'env_base': [
+            'lm_sensors'
+        ],
+        'env_xorg': ['xf86-video-ati', 'xfce4-sensors-plugin']
+    }
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        'lvm': {'device': '/dev/sda4', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '30g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '180g'
+        },
+        '/boot': {
+            'device': '/dev/sda2',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda3',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
+    }
+
+
 @task
 def jsl_acer_inspireone_fix():
     """
