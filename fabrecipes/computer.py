@@ -64,13 +64,13 @@ def virtualbox():
 
 
 @task
-def jsl_acer_inspireone():
+def acer_inspireone():
     """
     Acer Aspire One netbook
     installed on xx minutes
     cd fabrecipes/archlinux/autoinstall
-    fab -H root@hostname jsl_acer_inspireone install
-    fab -H root@hostname jsl_acer_inspireone configure env_xorg_i3 env_xorg_xfce
+    fab -H root@hostname computer.acer_inspireone install
+    fab -H root@hostname computer.acer_inspireone configure env_xorg_i3 env_xorg_xfce
     """
     env.hostname = 'acerone'
     env.useraccount = 'badele'
@@ -124,8 +124,8 @@ def vaio_vgn_ns21s():
     Sony Vaio VGN-NS21S netbook
     installed on xx minutes
     cd fabrecipes/archlinux/autoinstall
-    fab -H root@hostname jsl_vaio_vgn_ns21s install
-    fab -H root@hostname jsl_vaio_vgn_ns21s configure env_xorg_i3 env_xorg_xfce
+    fab -H root@hostname computer.vaio_vgn_ns21s install
+    fab -H root@hostname computer.vgn_ns21s configure env_xorg_i3 env_xorg_xfce
     """
     env.hostname = 'vaio'
     env.useraccount = 'badele'
@@ -179,8 +179,8 @@ def hp_pavilion_g7():
     HP Pavilion g7 Notebook PC
     installed on xx minutes
     cd fabrecipes/archlinux/autoinstall
-    fab -H root@hostname jsl_vaio_vgn_ns21s install
-    fab -H root@hostname jsl_vaio_vgn_ns21s configure env_xorg_i3 env_xorg_xfce
+    fab -H root@hostname computer.hp_pavilion_g7 install
+    fab -H root@hostname computer.hp_pavilion_g7 configure env_xorg_i3 env_xorg_xfce
     """
     env.hostname = 'hp2012'
     env.useraccount = 'badele'
