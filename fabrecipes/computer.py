@@ -141,9 +141,22 @@ def vaio_vgn_ns21s():
     env.timezone_city = 'City'
     env.pkgs = {
         'env_base': [
-            'lm_sensors'
+            'lm_sensors',
+            'dnsutils',
         ],
-        'env_xorg': ['xf86-video-ati', 'xfce4-sensors-plugin']
+        'env_xorg': [
+            'xf86-video-ati',
+            'xfce4-sensors-plugin',
+            'libreoffice-base',
+            'libreoffice-calc',
+            'libreoffice-draw',
+            'libreoffice-impress',
+            'libreoffice-math',
+            'libreoffice-writer',
+            'libreoffice-fr',
+            'epdfview',
+            'ttf-ms-fonts',
+        ]
     }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
@@ -196,9 +209,22 @@ def hp_pavilion_g7():
     env.timezone_city = 'City'
     env.pkgs = {
         'env_base': [
-            'lm_sensors'
+            'lm_sensors',
+            'dnsutils',
         ],
-        'env_xorg': ['xf86-video-ati', 'xfce4-sensors-plugin']
+        'env_xorg': [
+            'xf86-video-ati',
+            'xfce4-sensors-plugin'
+            'libreoffice-base',
+            'libreoffice-calc',
+            'libreoffice-draw',
+            'libreoffice-impress',
+            'libreoffice-math',
+            'libreoffice-writer',
+            'libreoffice-fr',
+            'epdfview',
+            'ttf-ms-fonts',
+        ]
     }
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
