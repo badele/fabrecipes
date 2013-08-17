@@ -184,6 +184,7 @@ def env_xorg():
         'arandr',
         'xdotool',
         'xorg-server-utils',
+        'xf86-input-synaptics',
         'alsa-utils',
         'wicd-gtk',
 
