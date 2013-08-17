@@ -235,13 +235,13 @@ def hp_pavilion_g7():
             'device': '/dev/vg/root',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '40g'
+            'size': '20g'
         },
         '/home': {
             'device': '/dev/vg/home',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '180g'
+            'size': '100g'
         },
         '/boot': {
             'device': '/dev/sda1',
