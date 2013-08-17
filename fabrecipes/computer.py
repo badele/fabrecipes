@@ -147,6 +147,7 @@ def vaio_vgn_ns21s():
         'env_xorg': [
             'xf86-video-ati',
             'xfce4-sensors-plugin',
+            'xfce4-whiskermenu-plugin',
             'libreoffice-base',
             'libreoffice-calc',
             'libreoffice-draw',
@@ -229,12 +230,12 @@ def hp_pavilion_g7():
     env.arch = 'x86_64'
     env.disk = '/dev/sda'
     env.part = {
-        'lvm': {'device': '/dev/sda4', 'ptype': 'Linux'},
+        'lvm': {'device': '/dev/sda3', 'ptype': 'Linux'},
         '/': {
             'device': '/dev/vg/root',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '30g'
+            'size': '40g'
         },
         '/home': {
             'device': '/dev/vg/home',
@@ -243,12 +244,12 @@ def hp_pavilion_g7():
             'size': '180g'
         },
         '/boot': {
-            'device': '/dev/sda2',
+            'device': '/dev/sda1',
             'ptype': 'Linux',
             'ftype': 'ext2'
         },
         'swap': {
-            'device': '/dev/sda3',
+            'device': '/dev/sda2',
             'ptype': 'Linux swap / Solaris',
             'ftype': 'swap'
         },
