@@ -188,6 +188,7 @@ def vaio_vgn_ns21s():
     }
 
 
+@task
 def hp_pavilion_g7():
     """
     HP Pavilion g7 Notebook PC
@@ -215,7 +216,8 @@ def hp_pavilion_g7():
         ],
         'env_xorg': [
             'xf86-video-ati',
-            'xfce4-sensors-plugin'
+            'xfce4-sensors-plugin',
+            'xfce4-whiskermenu-plugin',
             'libreoffice-base',
             'libreoffice-calc',
             'libreoffice-draw',
@@ -241,7 +243,7 @@ def hp_pavilion_g7():
             'device': '/dev/vg/home',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '100g'
+            'size': '90g'
         },
         '/boot': {
             'device': '/dev/sda1',
