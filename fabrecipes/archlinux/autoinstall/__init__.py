@@ -297,10 +297,10 @@ def env_xorg_misc(direct=True):
 
 def configure_base():
     # Configure python environement
-    use_python = 'python2.7'
-    require.python.pip(use_python=use_python)
-    require.python.package('virtualenv', use_python=use_python, use_sudo=True)
-    require.python.package('virtualenvwrapper', use_python=use_python, use_sudo=True)
+    python_cmd = 'python2.7'
+    require.python.pip(python_cmd=python_cmd)
+    require.python.package('virtualenv', python_cmd=python_cmd, use_sudo=True)
+    require.python.package('virtualenvwrapper', python_cmd=python_cmd, use_sudo=True)
 
     # Active service
     systemd.enable('dhcpcd')
