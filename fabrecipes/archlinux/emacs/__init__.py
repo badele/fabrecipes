@@ -34,23 +34,23 @@ def install_p2k():
     ]
     require.arch.packages(pkgs)
 
-    use_python = 'python2.7'
+    python_cmd = 'python2.7'
     virtualenv = '.virtualenvs/emacs_p2k'
-    require.python.pip(use_python=use_python)
+    require.python.pip(python_cmd=python_cmd)
     require.python.package(
         'virtualenv',
-        use_python=use_python,
+        python_cmd=python_cmd,
         use_sudo=True,
     )
     require.python.package(
         'virtualenvwrapper',
-        use_python=use_python,
+        python_cmd=python_cmd,
         use_sudo=True,
     )
     require.python.virtualenv(
         virtualenv,
-        use_python=use_python,
-        python='python2.7',
+        python_cmd=python_cmd,
+        venv_python='python2.7',
     )
 
     with python.virtualenv(virtualenv):
