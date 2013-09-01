@@ -136,6 +136,7 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
         'net-tools',
         'wget',
         'wicd',
+        'mc',
     ]
 
     # Check if a custom package for computer
@@ -210,7 +211,7 @@ def env_xorg():
 @task
 def env_xorg_xfce_i3():
     """
-    Install xorg xfce feature
+    Install Xorg Xfce + I3 feature
     """
 
     # if not arch.is_installed('xfce4-power-manager') and \
@@ -267,7 +268,6 @@ def env_xorg_xfce_i3():
     dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
     dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
 
-
     configure_xfce_i3()
 
 
@@ -277,7 +277,6 @@ def env_xorg_misc(direct=True):
     Full Xorg installation
     (Xorg + i3 + lighweight + misc software)
     """
-    env_xorg_base(False)
     pkgs = [
         'firefox',
         'flashplugin',
@@ -287,12 +286,19 @@ def env_xorg_misc(direct=True):
         'openvpn',
         'hexchat',
     ]
-    env.pkgs = list(set(env.pkgs + pkgs))
-    if direct:
-        require.arch.packages(env.pkgs)
-        configure_base()
-        configure_xorg()
-        configure_terminal()
+
+    # Check if a custom package for computer
+    env_section = inspect.stack()[0][3]
+    if 'pkgs' in env and env_section in env.pkgs:
+        pkgs = list(set(pkgs + env.pkgs[env_section]))
+
+    env_xorg()
+    require.arch.packages(pkgs)
+
+    # Synchronize user dotfiles
+    sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
 
 
 def configure_base():
