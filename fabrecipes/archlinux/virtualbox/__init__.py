@@ -6,6 +6,9 @@ from fabric.colors import red
 from fabtools import systemd
 from fabtools import require
 
+# Fabrecipes
+from fabrecipes.commons import dotfiles
+
 """
    This script install virtualbox
 """
@@ -27,7 +30,11 @@ def install():
     require.arch.packages(pkgs)
 
     # active startup virtualbox module compilation
-    systemd.start('dkms.service')
-    systemd.enable('dkms.service')
+    systemd.start('dkms')
+    systemd.enable('dkms')
+
+    # Synchronize user
+    dotfiles.sync('fabrecipes/virtualbox/user/', '$HOME/')
+    dotfiles.sync('fabrecipes/virtualbox/sys/', '/', use_sudo='true')
 
     print(red('Please reboot your system for use new kernel'))
