@@ -96,7 +96,7 @@ def ds_list(zfs_name):
     Get a dataset list
     """
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -H -r -d1 -t filesystem %s' % zfs_name)
+        res = sudo('zfs list -H -d1 -t filesystem %s' % zfs_name)
         return [line.split('\t')[0].replace('%s/' % zfs_name,'',1) for line in res.splitlines()[1:]]
 
 
@@ -105,12 +105,27 @@ def bk_list(zfs_name):
     Get a backup snapshot list
     """
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -H -r -d1 -t snap -s name -o name %s | egrep  "@[0-9]{4}" ' % zfs_name)
+        res = sudo('zfs list -H -d1 -t snap -s name -o name %s | egrep  "@[0-9]{4}" ' % zfs_name)
         return [line.split('@')[1] for line in res.splitlines()]
 
 
 @task
-def bk_snapshot(zfs_name="LIVE"):
+def bk_snapshots(pool_name="LIVE"):
+    """
+    Create a today snap for the zfs_name filesystem
+
+    fab backup:pool_name
+    """
+
+    if not env.host_string:
+        env.host_string = 'localhost'
+
+    sdslist = ds_list(pool_name)
+    for ds in sdslist:
+        bk_snapshot('%s/%s' % (pool_name, ds))
+
+
+def bk_snapshot(ds_name):
     """
     Create a today snap for the zfs_name filesystem
 
@@ -122,11 +137,13 @@ def bk_snapshot(zfs_name="LIVE"):
 
     now = today()
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -r -t snap -o name -s name %s | grep \'%s\'' % (zfs_name, now))
+        res = sudo('zfs list -t snap -o name -s name %s | grep \'%s\'' % (ds_name, now))
         if not res.succeeded:
-            res = sudo('zfs snapshot -r %s@%s' % (zfs_name, now))
+            res = sudo('zfs snapshot %s@%s' % (ds_name, now))
             if res.succeeded:
-                print(green("Backup done for %s@%s" % (zfs_name, now)))
+                print(green("Backup done for %s@%s" % (ds_name, now)))
+            else:
+                print(red("Problem with backup %s@%s" % (ds_name, now)))
 
 
 @task
@@ -165,10 +182,9 @@ def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
         # Check if first replication
         if len(dbklist) == 0:
             firstbk = '%s/%s@%s' % (zfs_src, ds, sbklist[0])
-            sudo('zfs send -D %s | zfs recv -Fduv %s/%s' % (
+            sudo('zfs send -D %s | zfs recv -Fduv %s' % (
                 firstbk,
                 dst_path,
-                ds,
             )
             )
         else:
@@ -177,11 +193,10 @@ def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
                 if bk not in dbklist:
                     firstbk = '%s/%s@%s' % (zfs_src, ds, sbklist[pos - 1])
                     lastbk = '%s/%s@%s' % (zfs_src, ds, sbklist[pos])
-                    sudo('zfs send -i %s %s | zfs recv -Fduv %s/%s' % (
+                    sudo('zfs send -i %s %s | zfs recv -Fduv %s' % (
                         firstbk,
                         lastbk,
                         dst_path,
-                        ds,
                     )
                     )
                 pos += 1
