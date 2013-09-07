@@ -3,13 +3,16 @@ import datetime
 
 # Fabric
 from fabric.api import settings, task, sudo, env, hide, abort
-from fabric.colors import red, green
+from fabric.colors import red, green, yellow
 
 # Fabtools
 from fabric.contrib.files import append
 from fabtools import require
 from fabtools import arch
 from fabtools import disk
+
+# Fabrecipes
+from fabrecipes.commons import dotfiles
 
 """
    This script install archzfs and add another features
@@ -49,6 +52,10 @@ def install():
 
     # Install package
     require.arch.package('archzfs')
+
+    # Synchronize user
+    dotfiles.sync('fabrecipes/zfs/user/', '$HOME/')
+    dotfiles.sync('fabrecipes/zfs/sys/', '/', use_sudo='true')
 
 
 def create(zfs_name):
@@ -137,13 +144,15 @@ def bk_snapshot(ds_name):
 
     now = today()
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -t snap -o name -s name %s | grep \'%s\'' % (ds_name, now))
+        res = sudo('zfs list -r -t snap -o name -s name %s | grep \'%s\'' % (ds_name, now))
         if not res.succeeded:
             res = sudo('zfs snapshot %s@%s' % (ds_name, now))
             if res.succeeded:
-                print(green("Backup done for %s@%s" % (ds_name, now)))
+                print(green("Snapshot done for %s@%s" % (ds_name, now)))
             else:
-                print(red("Problem with backup %s@%s" % (ds_name, now)))
+                print(red("Problem with snapshot %s@%s" % (ds_name, now)))
+        else:
+            print(yellow("Snapshot %s@%s already exist" % (ds_name, now)))
 
 
 @task
