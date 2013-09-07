@@ -156,6 +156,32 @@ def bk_snapshot(ds_name):
 
 
 @task
+def bk_keep_snapshots(zfs_name="LIVE", nb_keep=15):
+    """
+    Keep only nb snapshot
+
+    fab bk_keep_snapshot
+    """
+
+    if not env.host_string:
+        env.host_string = 'localhost'
+
+    # Check if dataset exist on destination
+    sdslist = ds_list(zfs_name)
+    for ds in sdslist:
+        print("search for %s" % ds)
+        bklist = bk_list('%s/%s' % (zfs_name, ds))
+        lastpos = len(bklist) - nb_keep
+        todelete = bklist[:lastpos]
+        for bk in todelete:
+            bk_delete_snapshot('%s/%s@%s' % (zfs_name, ds, bk))
+
+
+def bk_delete_snapshot(snap_name):
+    sudo('zfs destroy %s' % snap_name)
+
+
+@task
 def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
     """
     replicate snapshot to another pool
