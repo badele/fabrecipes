@@ -182,7 +182,7 @@ def bk_delete_snapshot(snap_name):
 
 
 @task
-def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
+def bk_replicate(nb_keep=15, zfs_src="LIVE", zfs_dst="BACKUP", path=""):
     """
     replicate snapshot to another pool
 
@@ -196,12 +196,11 @@ def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
     require_zfs('%s' % dst_path)
 
     sdslist = ds_list(zfs_src)
-    ddslist = ds_list(zfs_dst)
     dbklist = ds_list(zfs_dst)
 
     # Check if dataset exist on destination
     for ds in sdslist:
-        if ds not in ddslist:
+        if ds not in dbklist:
             create('%s/%s' % (dst_path, ds))
 
     # Replicate
@@ -214,27 +213,44 @@ def bk_replicate(zfs_src="LIVE", zfs_dst="BACKUP", path=""):
         if len(sbklist) == 0:
             abort("Please execute fab bk_snapshot:%s before bk_replicate" % zfs_src)
 
-        # Check if first replication
+        # # Check if first replication
         if len(dbklist) == 0:
-            firstbk = '%s/%s@%s' % (zfs_src, ds, sbklist[0])
-            sudo('zfs send -D %s | zfs recv -Fduv %s' % (
-                firstbk,
+            firstbk = sbklist[0]
+            firstpath = '%s/%s@%s' % (zfs_src, ds, firstbk)
+            sudo('zfs send -vD %s | zfs recv -Fduv %s' % (
+                firstpath,
                 dst_path,
             )
             )
-        else:
+
+        # If LIVE have more one backups
+        if len(sbklist) > 1:
             pos = 0
-            for bk in sbklist:
-                if bk not in dbklist:
-                    firstbk = '%s/%s@%s' % (zfs_src, ds, sbklist[pos - 1])
-                    lastbk = '%s/%s@%s' % (zfs_src, ds, sbklist[pos])
-                    sudo('zfs send -i %s %s | zfs recv -Fduv %s' % (
-                        firstbk,
-                        lastbk,
-                        dst_path,
-                    )
-                    )
+            for bk in sbklist[:-1]:
+                firstbk = bk
+                nextbk = sbklist[pos + 1]
+                recalc_dbklist = bk_list('%s/%s' % (zfs_dst, ds))
+                if firstbk in recalc_dbklist:
+                    if nextbk not in recalc_dbklist:
+                        firstpath = '%s/%s@%s' % (zfs_src, ds, firstbk)
+                        nextpath = '%s/%s@%s' % (zfs_src, ds, nextbk)
+                        sudo('zfs send -vi %s %s | zfs recv -Fduv %s' % (
+                            firstpath,
+                            nextpath,
+                            dst_path,
+                        )
+                        )
                 pos += 1
+
+    # Delete snapshot if not in LIVE pool
+    for ds in sdslist:
+        sbklist = bk_list('%s/%s' % (zfs_src, ds))
+        dbklist = bk_list('%s/%s' % (zfs_dst, ds))
+        for dbk in dbklist:
+            if dbk not in sbklist:
+                bk_delete_snapshot('%s/%s@%s' % (zfs_dst, ds, dbk))
+
+
 
 
 def today():
