@@ -58,25 +58,8 @@ def install():
     dotfiles.sync('fabrecipes/zfs/sys/', '/', use_sudo='true')
 
 
-def create(zfs_name):
-    with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs create -p %s' % zfs_name)
-        if not res.succeeded:
-            print(red("Can't create filesystem %s" % zfs_name))
-
-
-def require_zfs(zfs_name):
-    if not env.host_string:
-        env.host_string = 'localhost'
-
-    with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -H -o name | grep "^%s$"' % zfs_name)
-        if not res.succeeded:
-            create(zfs_name)
-
-
 @task
-def init_crypted_zfs(device, zfs_name):
+def init_crypted_zfs(device, pool_name):
     """
     Prepare hhd backup from live HDD
     ex:
@@ -93,18 +76,18 @@ def init_crypted_zfs(device, zfs_name):
 
     # Prepare a crypted ZFS disk
     sudo('cryptsetup luksFormat -c aes-xts-plain64 -s 512 %s' % partition)
-    sudo('cryptsetup luksOpen %s %s' % (partition, zfs_name.lower()))
-    sudo('zpool create %s /dev/mapper/%s' % (zfs_name.upper(), zfs_name.lower()))
-    sudo('zfs set compress=on %s' % zfs_name.upper())
+    sudo('cryptsetup luksOpen %s %s' % (partition, pool_name.lower()))
+    sudo('zpool create %s /dev/mapper/%s' % (pool_name.upper(), pool_name.lower()))
+    sudo('zfs set compress=on %s' % pool_name.upper())
 
 
-def ds_list(zfs_name):
+def ds_list(pool_name):
     """
     Get a dataset list
     """
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -H -d1 -t filesystem %s' % zfs_name)
-        return [line.split('\t')[0].replace('%s/' % zfs_name,'',1) for line in res.splitlines()[1:]]
+        res = sudo('zfs list -H -d1 -t filesystem %s' % pool_name)
+        return [line.split('\t')[0].replace('%s/' % pool_name,'',1) for line in res.splitlines()[1:]]
 
 
 def bk_list(zfs_name):
@@ -129,10 +112,40 @@ def bk_snapshots(pool_name="LIVE"):
 
     sdslist = ds_list(pool_name)
     for ds in sdslist:
-        bk_snapshot('%s/%s' % (pool_name, ds))
+        zfs_name = '%s/%s' % (pool_name, ds)
+        bk_snapshot(zfs_name)
 
 
-def bk_snapshot(ds_name):
+@task
+def bk_replicates(nb_keep=15, pool_src="LIVE", pool_dst="BACKUP"):
+    """
+    replicate snapshot to another pool
+
+    fab replicates:15
+
+    or
+
+    fab replicates:15,ZFSSRC,ZFSDST
+    """
+
+    if not env.host_string:
+        env.host_string = 'localhost'
+
+    sdslist = ds_list(pool_src)
+    ddslist = ds_list(pool_dst)
+    for ds in sdslist:
+        # Check if dataset exist on destination
+        if ds not in ddslist:
+            dzfspath = '%s/%s' % (pool_dst, ds)
+            create('%s/%s' % dzfspath)
+
+        # Replicate
+        szfspath = '%s/%s' % (pool_src, ds)
+        dzfspath = '%s/%s' % (pool_dst, ds)
+        bk_replicate(szfspath, dzfspath, nb_keep)
+
+
+def bk_snapshot(zfs_name):
     """
     Create a today snap for the zfs_name filesystem
 
@@ -146,111 +159,109 @@ def bk_snapshot(ds_name):
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
         res = sudo('zfs list -r -t snap -o name -s name %s | grep \'%s\'' % (ds_name, now))
         if not res.succeeded:
-            res = sudo('zfs snapshot %s@%s' % (ds_name, now))
+            res = sudo('zfs snapshot %s@%s' % (zfs_name, now))
             if res.succeeded:
-                print(green("Snapshot done for %s@%s" % (ds_name, now)))
+                print(green("Snapshot done for %s@%s" % (zfs_name, now)))
             else:
-                print(red("Problem with snapshot %s@%s" % (ds_name, now)))
+                print(red("Problem with snapshot %s@%s" % (zfs_name, now)))
         else:
-            print(yellow("Snapshot %s@%s already exist" % (ds_name, now)))
+            print(yellow("Snapshot %s@%s already exist" % (zfs_name, now)))
 
 
-@task
-def bk_keep_snapshots(zfs_name="LIVE", nb_keep=15):
+def bk_replicate(zfs_src, zfs_dst, nb_keep):
+    print("backup for %s" % zfs_src)
+    sbklist = bk_list(zfs_src)
+    dbklist = bk_list(zfs_dst)
+
+    # Check if the zfs_src have the snapshot
+    if len(sbklist) == 0:
+        abort("Please execute fab bk_snapshot:%s before bk_replicate" % zfs_src)
+
+    # # Check if first replication
+    if len(dbklist) == 0:
+        firstbk = sbklist[0]
+        firstpath = '%s@%s' % (zfs_src, firstbk)
+        sudo('zfs send -vD %s | zfs recv -Fduv %s' % (
+            firstpath,
+            zfs_dst,
+        )
+        )
+
+    # If LIVE have more one backups
+    if len(sbklist) > 1:
+        pos = 0
+        for bk in sbklist[:-1]:
+            firstbk = bk
+            nextbk = sbklist[pos + 1]
+            recalc_dbklist = bk_list(zfs_dst)
+            if firstbk in recalc_dbklist:
+                if nextbk not in recalc_dbklist:
+                    firstpath = '%s@%s' % (zfs_src, firstbk)
+                    nextpath = '%s@%s' % (zfs_src, nextbk)
+                    sudo('zfs send -vi %s %s | zfs recv -Fduv %s' % (
+                        firstpath,
+                        nextpath,
+                        zfs_dst,
+                    )
+                    )
+            pos += 1
+
+    # Keep only nb_keep days on LIVE DISK
+    bk_keep_snapshots(zfs_src, nb_keep)
+
+    # Delete snapshot not in LIVE disk
+    delete_snapshot_not_in_live(zfs_src, zfs_dst)
+
+
+def delete_snapshot_not_in_live(zfs_src, zfs_dst):
+    """
+    Delete snapshot if not in LIVE pool
+    """
+
+    sbklist = bk_list(zfs_src)
+    dbklist = bk_list(zfs_dst)
+    for dbk in dbklist:
+        if dbk not in sbklist:
+            bk_delete_snapshot('%s@%s' % (zfs_dst, dbk))
+
+
+def bk_keep_snapshots(zfs_name, nb_keep):
     """
     Keep only nb snapshot
-
-    fab bk_keep_snapshot
     """
 
-    if not env.host_string:
-        env.host_string = 'localhost'
-
     # Check if dataset exist on destination
-    sdslist = ds_list(zfs_name)
-    for ds in sdslist:
-        print("search for %s" % ds)
-        bklist = bk_list('%s/%s' % (zfs_name, ds))
-        lastpos = len(bklist) - nb_keep
-        todelete = bklist[:lastpos]
+    print("search for %s" % zfs_name)
+
+    sbklist = bk_list(zfs_name)
+    nb_keep = int(nb_keep)
+    if len(sbklist) > int(nb_keep):
+        lastpos = len(sbklist) - nb_keep
+        todelete = sbklist[:lastpos]
         for bk in todelete:
-            bk_delete_snapshot('%s/%s@%s' % (zfs_name, ds, bk))
+            bk_delete = '%s@%s' % (zfs_name, bk)
+            bk_delete_snapshot(bk_delete)
 
 
 def bk_delete_snapshot(snap_name):
     sudo('zfs destroy %s' % snap_name)
 
 
-@task
-def bk_replicate(nb_keep=15, zfs_src="LIVE", zfs_dst="BACKUP", path=""):
-    """
-    replicate snapshot to another pool
+def create(zfs_name):
+    with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
+        res = sudo('zfs create -p %s' % zfs_name)
+        if not res.succeeded:
+            print(red("Can't create filesystem %s" % zfs_name))
 
-    fab replicate:zfs_src,zfs_dst
-    """
 
+def require_zfs(zfs_name):
     if not env.host_string:
         env.host_string = 'localhost'
 
-    dst_path = "%s%s" % (zfs_dst, path)
-    require_zfs('%s' % dst_path)
-
-    sdslist = ds_list(zfs_src)
-    dbklist = ds_list(zfs_dst)
-
-    # Check if dataset exist on destination
-    for ds in sdslist:
-        if ds not in dbklist:
-            create('%s/%s' % (dst_path, ds))
-
-    # Replicate
-    for ds in sdslist:
-        print("backup for %s" % ds)
-        sbklist = bk_list('%s/%s' % (zfs_src, ds))
-        dbklist = bk_list('%s/%s' % (zfs_dst, ds))
-
-        # Check if the zfs_src have the snapshot
-        if len(sbklist) == 0:
-            abort("Please execute fab bk_snapshot:%s before bk_replicate" % zfs_src)
-
-        # # Check if first replication
-        if len(dbklist) == 0:
-            firstbk = sbklist[0]
-            firstpath = '%s/%s@%s' % (zfs_src, ds, firstbk)
-            sudo('zfs send -vD %s | zfs recv -Fduv %s' % (
-                firstpath,
-                dst_path,
-            )
-            )
-
-        # If LIVE have more one backups
-        if len(sbklist) > 1:
-            pos = 0
-            for bk in sbklist[:-1]:
-                firstbk = bk
-                nextbk = sbklist[pos + 1]
-                recalc_dbklist = bk_list('%s/%s' % (zfs_dst, ds))
-                if firstbk in recalc_dbklist:
-                    if nextbk not in recalc_dbklist:
-                        firstpath = '%s/%s@%s' % (zfs_src, ds, firstbk)
-                        nextpath = '%s/%s@%s' % (zfs_src, ds, nextbk)
-                        sudo('zfs send -vi %s %s | zfs recv -Fduv %s' % (
-                            firstpath,
-                            nextpath,
-                            dst_path,
-                        )
-                        )
-                pos += 1
-
-    # Delete snapshot if not in LIVE pool
-    for ds in sdslist:
-        sbklist = bk_list('%s/%s' % (zfs_src, ds))
-        dbklist = bk_list('%s/%s' % (zfs_dst, ds))
-        for dbk in dbklist:
-            if dbk not in sbklist:
-                bk_delete_snapshot('%s/%s@%s' % (zfs_dst, ds, dbk))
-
-
+    with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
+        res = sudo('zfs list -H -o name | grep "^%s$"' % zfs_name)
+        if not res.succeeded:
+            create(zfs_name)
 
 
 def today():
