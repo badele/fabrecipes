@@ -35,7 +35,7 @@ from fabrecipes.commons import dotfiles
 @task
 def install():
     """
-    Install zfs from archzfs (demizerone repository)
+    Install zfs system (kernel + utils) from archzfs (demizerone repository)
     """
 
     # Add archzfs repository
@@ -61,7 +61,7 @@ def install():
 @task
 def init_crypted_zfs(device, pool_name):
     """
-    Prepare hhd backup from live HDD
+    Prepare a crypted ZFS disk
     ex:
       fab init_crypted_zfs:/dev/sdb,backup
     """
@@ -102,7 +102,7 @@ def bk_list(zfs_name):
 @task
 def bk_snapshots(pool_name="LIVE"):
     """
-    Create a today snap for the zfs_name filesystem
+    Create a today snapshot for the pool (default: LIVE)
 
     fab backup:pool_name
     """
@@ -119,7 +119,7 @@ def bk_snapshots(pool_name="LIVE"):
 @task
 def bk_replicates(nb_keep=15, pool_src="LIVE", pool_dst="BACKUP"):
     """
-    replicate snapshot to another pool
+    Replicate snapshot to another pool (default: BACKUP)
 
     fab replicates:15
 
