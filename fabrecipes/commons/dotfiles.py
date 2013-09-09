@@ -7,7 +7,6 @@ from fabtools.files import is_dir
 from fabric.colors import red
 
 
-@task
 def fetch(git=''):
     """
     Clone dotfiles project to ~/dotfiles
@@ -31,7 +30,6 @@ def fetch(git=''):
     run(cmd)
 
 
-@task
 def sync(src, dst, use_sudo='false'):
     """
     Copy file from dotfiles dot dst
