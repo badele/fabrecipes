@@ -59,18 +59,18 @@ def install():
 
 
 @task
-def init_crypted_zfs(device, pool_name):
+def init_crypted_zfs(device, partitionID, pool_name):
     """
     Prepare a crypted ZFS disk
     ex:
-      fab init_crypted_zfs:/dev/sdb,backup
+      fab init_crypted_zfs:/dev/sdb,1,backup
     """
     if not env.host_string:
         env.host_string = 'localhost'
 
     # Check a first partition is in Solaris (for security format)
     ptype = disk.partitions(device)
-    partition = '%s1' % device
+    partition = '%s%s' % (device, partitionID)
     if ptype[partition] != 0xBF:
         abort("The first partition is not SOLARIS type (0xBF)")
 
