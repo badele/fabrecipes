@@ -75,10 +75,11 @@ def init_crypted_zfs(device, pool_name):
         abort("The first partition is not SOLARIS type (0xBF)")
 
     # Prepare a crypted ZFS disk
+    uppername = pool_name.upper()
     sudo('cryptsetup luksFormat -c aes-xts-plain64 -s 512 %s' % partition)
-    sudo('cryptsetup luksOpen %s %s' % (partition, pool_name.lower()))
-    sudo('zpool create %s /dev/mapper/%s' % (pool_name.upper(), pool_name.lower()))
-    sudo('zfs set compress=on %s' % pool_name.upper())
+    sudo('cryptsetup luksOpen %s LUKS-%s' % (partition, uppername))
+    sudo('zpool create %s /dev/mapper/LUKS-%s' % (uppername, uppername))
+    sudo('zfs set compress=on %s' % uppername)
 
 
 def ds_list(pool_name):
