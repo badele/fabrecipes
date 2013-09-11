@@ -21,8 +21,8 @@ def install():
     """
     Install a rstblog in python2 virtualenv
     """
-    if 'pkgs' not in env:
-        env.pkgs = []
+    if not env.host_string:
+        env.host_string = 'localhost'
 
     pkgs = [
         'python2',
@@ -34,7 +34,7 @@ def install():
     project_name = 'rstblog'
     use_python = 'python2.7'
     virtualenv = '.virtualenvs/rstblog'
-    gitproject = 'clone https://github.com/badele/rstblog.git'
+    gitproject = 'https://github.com/badele/rstblog.git'
 
     require.python.pip(use_python=use_python)
     require.python.package(
@@ -58,7 +58,7 @@ def install():
     project = '%s/%s' % (project_root, project_name)
     if not is_dir(project):
         require.files.directory(project_root)
-        cmd = 'cd %(project_root)s ; git %(gitproject)s' % locals()
+        cmd = 'cd %(project_root)s ; git clone %(gitproject)s' % locals()
         run(cmd)
         cloned = True
 
