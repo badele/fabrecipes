@@ -36,21 +36,21 @@ def install():
     virtualenv = '.virtualenvs/rstblog'
     gitproject = 'https://github.com/badele/rstblog.git'
 
-    require.python.pip(use_python=use_python)
+    require.python.pip(python_cmd=use_python)
     require.python.package(
         'virtualenv',
-        use_python=use_python,
+        python_cmd=use_python,
         use_sudo=True,
     )
     require.python.package(
         'virtualenvwrapper',
-        use_python=use_python,
+        python_cmd=use_python,
         use_sudo=True,
     )
     require.python.virtualenv(
         virtualenv,
-        use_python=use_python,
-        python='python2.7',
+        python_cmd=use_python,
+        venv_python='python2.7',
     )
 
     # Get a rstblog from my repository https://github.com/badele/rstblog.git
