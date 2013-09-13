@@ -158,7 +158,7 @@ def bk_snapshot(zfs_name):
 
     now = today()
     with settings(hide('running', 'warnings', 'stdout'), warn_only=True):
-        res = sudo('zfs list -r -t snap -o name -s name %s | grep \'%s\'' % (ds_name, now))
+        res = sudo('zfs list -r -t snap -o name -s name %s | grep \'%s\'' % (zfs_name, now))
         if not res.succeeded:
             res = sudo('zfs snapshot %s@%s' % (zfs_name, now))
             if res.succeeded:
