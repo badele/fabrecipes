@@ -12,14 +12,14 @@ from fabtools import python
 
 
 """
-   Install pelilcan
+   Install pelican
 """
 
 
 @task
 def install():
     """
-    Install a pelilcan in python2 virtualenv
+    Install a pelican in python2 virtualenv
     """
 
     if not env.host_string:
@@ -54,7 +54,7 @@ def install():
         venv_python='python2.7',
     )
 
-    # Get a pelilcan github repository github.com/getpelican/pelican.git
+    # Get a pelican github repository
     cloned = False
     project = '%s/%s' % (project_root, project_name)
     if not is_dir(project):
@@ -68,7 +68,7 @@ def install():
         run(cmd)
 
 
-    # Install pelilcan
+    # Install pelican
     with python.virtualenv(virtualenv):
         here = os.path.dirname(__file__)
         requirements = '%(here)s/requirements.txt' % locals()
