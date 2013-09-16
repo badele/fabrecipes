@@ -213,6 +213,7 @@ def hp_pavilion_g7():
         'env_base': [
             'lm_sensors',
             'dnsutils',
+            'pulseaudio',
         ],
         'env_xorg': [
             'xf86-video-ati',
