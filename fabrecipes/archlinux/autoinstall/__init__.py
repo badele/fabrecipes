@@ -225,6 +225,7 @@ def env_xorg_xfce_i3():
         'thunar',
         'thunar-volman',
         'tumbler',
+        'ristretto',
         'xfce4-appfinder',
         'xfce4-mixer',
         'xfce4-panel',
