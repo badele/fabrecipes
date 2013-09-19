@@ -105,7 +105,7 @@ def bk_snapshots(pool_name="LIVE"):
     """
     Create a today snapshot for the pool (default: LIVE)
 
-    fab backup:pool_name
+    fab bk_snapshots:pool_name
     """
 
     if not env.host_string:
@@ -122,11 +122,11 @@ def bk_replicates(nb_keep=15, pool_src="LIVE", pool_dst="BACKUP"):
     """
     Replicate snapshot to another pool (default: BACKUP)
 
-    fab replicates:15
+    fab bk_replicates:15
 
     or
 
-    fab replicates:15,ZFSSRC,ZFSDST
+    fab bk_replicates:15,ZFSSRC,ZFSDST
     """
 
     if not env.host_string:
@@ -144,6 +144,21 @@ def bk_replicates(nb_keep=15, pool_src="LIVE", pool_dst="BACKUP"):
         szfspath = '%s/%s' % (pool_src, ds)
         dzfspath = '%s/%s' % (pool_dst, ds)
         bk_replicate(szfspath, dzfspath, nb_keep)
+
+
+@task
+def bk_snaprep(nb_keep=15, pool_src="LIVE", pool_dst="BACKUP"):
+    """
+    Make a snapshots and replicates in the same time
+
+    fab bk_snaprep
+
+    or
+
+    fab bk_snaprep:15,ZFSSRC,ZFSDST
+    """
+    bk_snapshots(pool_src)
+    bk_replicates(nb_keep, pool_src, pool_dst)
 
 
 def bk_snapshot(zfs_name):
