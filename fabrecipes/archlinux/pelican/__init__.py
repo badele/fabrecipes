@@ -51,7 +51,7 @@ def install():
     require.python.virtualenv(
         virtualenv,
         python_cmd=use_python,
-        venv_python='python2.7',
+        venv_python=use_python,
     )
 
     # Get a pelican github repository
