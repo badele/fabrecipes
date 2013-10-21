@@ -11,7 +11,7 @@ from fabtools import require
 from fabtools import disk
 
 """
-OpenWrt tools
+OpenWrt Data to USB stick
 """
 
 
