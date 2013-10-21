@@ -1,19 +1,22 @@
 # Fabric
 from fabric.api import env, task, run, shell_env
+
+# fabtools
 from fabtools import system
+from fabtools import openwrt
 
 # Fabrecipes
 import archlinux
-from fabrecipes import computer
 from fabrecipes.commons import dotfiles
-
+from fabrecipes import computer
+from fabrecipes import openwrt
 
 @task
 def capabilities():
     """Test capabilities functions in new distrition
     For openwrt:
       mv /etc/banner /etc/banner.disable
-      fab -s "/bin/sh -l -c" capabilities
+      fab -s "/bin/ash -l -c" capabilities
     """
 
     print ("SYSTEM")

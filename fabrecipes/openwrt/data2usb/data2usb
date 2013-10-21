@@ -1,0 +1,51 @@
+#!/bin/sh /etc/rc.common
+
+START=40
+STOP=99
+
+# start after USB (39) but before other apps possibly installed on external disk
+
+. /lib/functions/mount.sh
+
+start() {
+    # Delete USB tmp directory
+    mount | grep tmpfs  | grep /tmp > /dev/null
+    if [ $? -eq 0 ]; then
+        mount | grep /dev/sda1  | grep /mnt/tmp > /dev/null
+        if [ $? -eq 0 ]; then
+            rm -rf /mnt/tmp/*
+            cp -a /tmp/* /mnt/tmp/
+            if [ -h /var ]; then
+                mount | grep /dev/sda2  | grep /mnt/var > /dev/null
+                if [ $? -eq 0 ]; then
+                    cp -a /tmp/* /mnt/var
+                    rm -rf /var
+                    mkdir /var
+                fi
+            fi
+        fi
+    fi
+
+    # Mount tmp
+    mount | grep tmpfs  | grep /tmp > /dev/null
+    if [ $? -eq 0 ]; then
+        mount | grep /dev/sda1  | grep /mnt/tmp > /dev/null
+        if [ $? -eq 0 ]; then
+            umount -l /tmp
+            mount /mnt/tmp /tmp -o move
+            chmod 777 /tmp
+            logger -p info "TMP USB FILE IS OK"
+        fi
+    fi
+
+    # Mount var
+    mount | grep /dev/sda2  | grep /mnt/var > /dev/null
+    if [ $? -eq 0 ]; then
+        mount /mnt/var /var -o move
+        logger -p info "VAR USB FILE IS OK"
+    fi
+}
+
+stop() {
+    logger -p info "TMP & VAR USB FILE IS STOPPED"
+}
