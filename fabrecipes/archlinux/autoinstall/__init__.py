@@ -145,6 +145,7 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
     # Install required packages
+    run_as_root('pacman-key --refresh-keys')
     require.arch.packages(pkgs)
 
     # Install oh-my-zsh
