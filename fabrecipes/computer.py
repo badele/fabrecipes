@@ -148,6 +148,7 @@ def vaio_vgn_ns21s():
             'xf86-video-ati',
             'xfce4-sensors-plugin',
             'xfce4-whiskermenu-plugin',
+            'galculator',
             'libreoffice-base',
             'libreoffice-calc',
             'libreoffice-draw',
@@ -155,7 +156,7 @@ def vaio_vgn_ns21s():
             'libreoffice-math',
             'libreoffice-writer',
             'libreoffice-fr',
-            'epdfview',
+            'evince2-light',
             'ttf-ms-fonts',
         ]
     }
@@ -219,6 +220,7 @@ def hp_pavilion_g7():
             'xf86-video-ati',
             'xfce4-sensors-plugin',
             'xfce4-whiskermenu-plugin',
+            'galculator',
             'libreoffice-base',
             'libreoffice-calc',
             'libreoffice-draw',
@@ -226,7 +228,7 @@ def hp_pavilion_g7():
             'libreoffice-math',
             'libreoffice-writer',
             'libreoffice-fr',
-            'epdfview',
+            'evince2-light',
             'ttf-ms-fonts',
         ]
     }
@@ -253,6 +255,78 @@ def hp_pavilion_g7():
         },
         'swap': {
             'device': '/dev/sda2',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
+    }
+
+
+@task
+def dell_latitude():
+    """
+    Dell Latitude
+    installed on xx minutes
+    cd fabrecipes/archlinux/autoinstall
+    fab -H root@hostname computer.dell_latitude install
+    fab -H root@hostname computer.dell_latitude configure env_xorg_i3 env_xorg_xfce
+    """
+    env.hostname = 'dell'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
+    env.keymap = 'fr-pc'
+    env.xsessions = 'xfce, i3'
+    env.xautologin = 'yes'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'City'
+    env.pkgs = {
+        'env_base': [
+            'lm_sensors',
+            'dnsutils',
+            'pulseaudio',
+        ],
+        'env_xorg': [
+            'xf86-video-intel',
+            'xfce4-sensors-plugin',
+            'xfce4-whiskermenu-plugin',
+            'galculator',
+            'libreoffice-base',
+            'libreoffice-calc',
+            'libreoffice-draw',
+            'libreoffice-impress',
+            'libreoffice-math',
+            'libreoffice-writer',
+            'libreoffice-fr',
+            'evince2-light',
+            'ttf-ms-fonts',
+        ]
+    }
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        'lvm': {'device': '/dev/sda7', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '20g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '270g'
+        },
+        '/boot': {
+            'device': '/dev/sda6',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda5',
             'ptype': 'Linux swap / Solaris',
             'ftype': 'swap'
         },
