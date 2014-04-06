@@ -32,7 +32,7 @@ def install_p2k():
         'emacs',
         # For flymake
         'xmlstarlet',
-        'csslint-git',
+        #'csslint-git',
     ]
     require.arch.packages(pkgs)
 
