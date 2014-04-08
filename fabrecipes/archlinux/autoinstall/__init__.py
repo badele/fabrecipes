@@ -311,7 +311,7 @@ def configure_base():
     require.python.package('virtualenvwrapper', python_cmd=python_cmd, use_sudo=True)
 
     # Active service
-    systemd.enable('dhcpcd')
+    systemd.disable('dhcpcd')
     systemd.enable('sshd')
     systemd.enable('wicd')
 
