@@ -61,9 +61,11 @@ from another PC execute this two lines for automatic installation in ``root@host
 .. code-block:: console
 
    $ cd fabrecipes/archlinux/autoinstall
-   $ fab -H root@hostname computer_sample install
+   $ fab -H root@hostname  computer.virtualbox archlinux.autoinstall.install
    [ ..  reboot your system ]
-   $ fab -H root@hostname computer_sample configure env_xorg_i3 sync_dotfiles:home
+   $ fab -H root@hostname computer.virtualbox archlinux.autoinstall.configure
+   $ fab -H username@hostname archlinux.autoinstall.env_xorg_xfce_i3
+   $ fab -H username@hostname archlinux.autoinstall.env_xorg_misc
    
 Well, you have now a fresh installation with a encrypted /home folder and i3 environment
 
