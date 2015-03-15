@@ -137,6 +137,9 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
         'wget',
         'wicd',
         'mc',
+        'mc-solarized-git',
+        'dircolors-solarized-git',
+
     ]
 
     # Check if a custom package for computer
@@ -189,6 +192,7 @@ def env_xorg():
         'xf86-input-synaptics',
         'alsa-utils',
         'wicd-gtk',
+        'xournal',
 
     ]
     # Check if a custom package for computer
@@ -287,6 +291,8 @@ def env_xorg_misc(direct=True):
         'keepassx',
         'openvpn',
         'hexchat',
+        'maim',
+        'slop',
     ]
 
     # Check if a custom package for computer
