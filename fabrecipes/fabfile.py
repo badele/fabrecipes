@@ -3,13 +3,15 @@ from fabric.api import env, task, run, shell_env
 
 # fabtools
 from fabtools import system
-from fabtools import openwrt
+#from fabtools import openwrt
 
 # Fabrecipes
 import archlinux
 from fabrecipes.commons import dotfiles
 from fabrecipes import computer
-from fabrecipes import openwrt
+#from fabrecipes import openwrt
+from fabrecipes import debian
+from fabrecipes import buildroot
 
 @task
 def capabilities():

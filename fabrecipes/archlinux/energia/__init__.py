@@ -32,4 +32,4 @@ def install():
     # Install udev
     ruled = 'ATTRS{idVendor}=="0451", ATTRS{idProduct}=="c32a", MODE="0660", GROUP="users", \
 RUN+="/sbin/modprobe ftdi-sio" RUN+="/bin/sh -c \'/bin/echo 0451 c32a > /sys/bus/usb-serial/drivers/ftdi_sio/new_id\''
-    require.file('/etc/udev/rules.d/energia.rules', contents=ruled, use_sudo=True)
+    require.file('1', contents=ruled, use_sudo=True)

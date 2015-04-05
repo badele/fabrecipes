@@ -158,6 +158,10 @@ def vaio_vgn_ns21s():
             'libreoffice-fr',
             'evince2-light',
             'ttf-ms-fonts',
+            'flashplugin',
+            'vlc',
+            'freerdp',
+            'remmina',
         ]
     }
     env.arch = 'x86_64'
@@ -230,6 +234,10 @@ def hp_pavilion_g7():
             'libreoffice-fr',
             'evince2-light',
             'ttf-ms-fonts',
+            'flashplugin',
+            'vlc',
+            'freerdp',
+            'remmina',
         ]
     }
     env.arch = 'x86_64'
@@ -302,6 +310,10 @@ def dell_latitude():
             'libreoffice-fr',
             'evince2-light',
             'ttf-ms-fonts',
+            'flashplugin',
+            'vlc',
+            'freerdp',
+            'remmina',
         ]
     }
     env.arch = 'x86_64'
