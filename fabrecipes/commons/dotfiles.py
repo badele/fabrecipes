@@ -5,6 +5,7 @@ from fabric.utils import abort
 # Fabtools
 from fabtools.files import is_dir
 from fabric.colors import red
+from fabric.api import hide, run, settings
 
 
 def fetch(git=''):
@@ -30,21 +31,23 @@ def fetch(git=''):
     run(cmd)
 
 
-def sync(src, dst, use_sudo='false'):
+def sync(src, dst, force_sync=True, use_sudo='false'):
     """
     Copy file from dotfiles dot dst
     """
     use_sudo = use_sudo.lower() == 'true'
 
     # Update dotfiles
-    fetch()
+    if force_sync:
+        fetch()
 
     # Synchronize system
     dotfiles = '/home/%(user)s/dotfiles' % env
     env_dotfiles = '%(dotfiles)s/%(src)s' % locals()
     if is_dir(env_dotfiles):
-        cmd = 'rsync -avr --exclude ".git/" "%(env_dotfiles)s" "%(dst)s"' % locals()
-        if use_sudo:
-            sudo(cmd)
-        else:
-            run(cmd)
+        with settings(hide('running', 'stdout', 'stderr', 'warnings'), warn_only=True):
+            cmd = 'rsync -avr --exclude ".git/" "%(env_dotfiles)s" "%(dst)s"' % locals()
+            if use_sudo:
+                sudo(cmd)
+            else:
+                run(cmd)
