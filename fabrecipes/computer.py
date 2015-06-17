@@ -29,7 +29,7 @@ def virtualbox():
     env.timezone_continent = 'Europe'
     env.timezone_city = 'City'
     env.pkgs = {
-        'env_org': [
+        'env_xorg': [
             'virtualbox-guest-utils',
             'xf86-video-vesa',
         ]
@@ -42,13 +42,124 @@ def virtualbox():
             'device': '/dev/vg/root',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '4g'
+            'size': '10g'
         },
         '/home': {
             'device': '/dev/vg/home',
             'ptype': 'Linux',
             'ftype': 'ext4',
-            'size': '1.5g'
+            'size': '5g'
+        },
+        '/boot': {
+            'device': '/dev/sda1',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda2',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
+    }
+
+
+@task
+def lenovo450():
+    """
+    Lenovo 450s netbook
+    installed on 30 minutes (15 Minutes + 1 minutes + 15 Minutes)
+    $ cd fabrecipes/archlinux
+    $ fab -H root@hostname computer.lenovo450 autoinstall.install
+    $ fab -H root@hostname computer.lenovo450 archlinux.autoinstall.configure
+    $ fab -H username@hostname computer.lenovo450 env_xorg_xfce_i3
+    """
+    env.hostname = 'lenovo450'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
+    env.keymap = 'fr-pc'
+    env.xsessions = 'xfce, i3'
+    env.xautologin = 'yes'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'Paris'
+    env.pkgs = [
+        'xf86-video-intel',
+        'xf86-input-synaptics',
+        'xf86-video-modesetting',
+    ]
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        'lvm': {'device': '/dev/sda3', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '50g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '200g'
+        },
+        '/boot': {
+            'device': '/dev/sda1',
+            'ptype': 'Linux',
+            'ftype': 'ext2'
+        },
+        'swap': {
+            'device': '/dev/sda2',
+            'ptype': 'Linux swap / Solaris',
+            'ftype': 'swap'
+        },
+    }
+
+@task
+def samsungn150():
+    """
+    Samsung n150 netbook
+    installed on 30 minutes (15 Minutes + 1 minutes + 15 Minutes)
+    $ cd fabrecipes/archlinux/autoinstall
+    $ fab -H root@hostname computer.samsungn150 install
+    $ fab -H root@hostname computer.virtualbox archlinux.autoinstall.configure
+    $ fab -H username@hostname computer.samsungn150 env_xorg_xfce_i3
+    """
+    env.hostname = 'samsungn150'
+    env.useraccount = 'badele'
+    env.dotfiles = 'https://github.com/badele/dotfiles.git'
+    env.locale = 'fr_FR.UTF-8'
+    env.charset = 'UTF-8'
+    env.keymap = 'fr-pc'
+    env.xsessions = 'xfce, i3'
+    env.xautologin = 'yes'
+    env.xkblayout = 'fr'
+    env.xkbvariant = 'latin9'
+    env.timezone_continent = 'Europe'
+    env.timezone_city = 'City'
+    env.pkgs = [
+        'xf86-video-intel',
+        'xf86-input-synaptics',
+        'xf86-video-modesetting',
+    ]
+    env.arch = 'x86_64'
+    env.disk = '/dev/sda'
+    env.part = {
+        'lvm': {'device': '/dev/sda3', 'ptype': 'Linux'},
+        '/': {
+            'device': '/dev/vg/root',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '10g'
+        },
+        '/home': {
+            'device': '/dev/vg/home',
+            'ptype': 'Linux',
+            'ftype': 'ext4',
+            'size': '5g'
         },
         '/boot': {
             'device': '/dev/sda1',
@@ -217,8 +328,6 @@ def hp_pavilion_g7():
     env.pkgs = {
         'env_base': [
             'lm_sensors',
-            'dnsutils',
-            'pulseaudio',
         ],
         'env_xorg': [
             'xf86-video-ati',
