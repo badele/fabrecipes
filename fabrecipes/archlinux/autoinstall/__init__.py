@@ -11,7 +11,7 @@ from fabric.contrib.files import append, comment, uncomment, sed
 # Fabtools
 from fabtools.require import file as require_file
 from fabtools.utils import run_as_root
-from fabtools.files import watch, is_dir, is_link
+from fabtools.files import watch, is_dir, is_link, is_file
 from fabtools import arch
 from fabtools import disk
 from fabtools import python
@@ -65,6 +65,13 @@ from fabrecipes.commons import dotfiles
 
 """
 
+EXECTREE = [
+    "env_base_requirement",
+    "env_base",
+    "env_xorg",
+    "env_xorg_xfce_i3",
+    "env_xorg_misc",
+]
 
 @task
 def install():
@@ -101,12 +108,10 @@ def configure():
 
     Please select profil begin by computer_
 
-    loadkeys fr
-    passwd
-    dhcpcd
-    pacman -S openssh
-    systemctl start sshd
-    # clean you .ssh/know_hosts
+    $ loadkeys fr
+    $ dhcpcd
+    $ systemctl start sshd
+    # clean your host .ssh/know_hosts (host warning)
     """
     if not 'hostname' in env:
         abort("Please select profil computer")
@@ -124,22 +129,52 @@ def configure():
 
 
 @task
-def env_base(direct=True, sync_dotfiles='fabrecipes'):
+def sync_dotfiles(env_section, sync_dotfiles='fabrecipes'):
     """
-    Install base system
+    Synchronize the computer configuration from a dotfiles project
+    """
+
+    # Fetch the dotfiles
+    dotfiles.fetch()
+
+    # Sync the default dotfiles for specific environment
+    findex = -1
+    if env_section in EXECTREE:
+        findex = EXECTREE.index(env_section)
+    for cindex in range(0, findex + 1):
+        csection = EXECTREE[cindex]
+
+        print "Synchronize from '%(csection)s'" % locals()
+        sync_dotfiles = 'fabrecipes/autoinstall/%(csection)s' % locals()
+        dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/', force_sync=False)
+        dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true', force_sync=False)
+
+    # Sync computer dotfiles
+    computer_hostname = env.hostname
+
+    print "Synchronize from '%(computer_hostname)s' computer" % locals()
+    sync_dotfiles = 'fabrecipes/autoinstall/computers/%(computer_hostname)s' % locals()
+    print "#### %(sync_dotfiles)s" % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/', force_sync=False)
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true', force_sync=False)
+
+
+@task
+def env_base_requirement(direct=True, sync_dotfiles='fabrecipes'):
+    """
+    Install requirement base system
     """
     pkgs = [
         'zsh',
+        'wget',
+        'netctl',
+        'dialog',
         'yaourt',
         'python2',
-        'tmux',
+        'ifplugd',
         'net-tools',
-        'wget',
-        'wicd',
-        'mc',
-        'mc-solarized-git',
-        'dircolors-solarized-git',
-
+        'wpa_actiond',
+        'wpa_supplicant',
     ]
 
     # Check if a custom package for computer
@@ -148,8 +183,13 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
     # Install required packages
+    run_as_root('dirmngr </dev/null')
+    run_as_root('pacman-key --init')
+    run_as_root('pacman-key --populate archlinux')
     run_as_root('pacman-key --refresh-keys')
-    require.arch.packages(pkgs)
+    run_as_root('pacman --noconfirm -Syyu')
+    run_as_root('pacman-db-upgrade')
+    require.arch.packages(pkgs, options=["--noconfirm"])
 
     # Install oh-my-zsh
     ohmyzsh = '$HOME/.oh-my-zsh'
@@ -168,6 +208,35 @@ def env_base(direct=True, sync_dotfiles='fabrecipes'):
     dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
     dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
 
+
+@task
+def env_base():
+    """
+    Install base system
+    """
+    pkgs = [
+        'mc',
+        'tmux',
+        'dnsutils',
+        'alsa-utils',
+        'pulseaudio',
+        'mc-solarized-git',
+        'dircolors-solarized-git',
+    ]
+    # Check if a custom package for computer
+    env_section = inspect.stack()[0][3]
+    if 'pkgs' in env and env_section in env.pkgs:
+        pkgs = list(set(pkgs + env.pkgs[env_section]))
+
+    # Install required packages
+    env_base_requirement()
+    require.arch.packages(pkgs, options=["--noconfirm"])
+
+    # Synchronize user dotfiles
+    sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
+    dotfiles.sync('%(sync_dotfiles)s/user/' % locals(), '$HOME/')
+    dotfiles.sync('%(sync_dotfiles)s/sys/' % locals(), '/', use_sudo='true')
+
     # Configure base
     configure_base()
 
@@ -178,31 +247,28 @@ def env_xorg():
     Install base Xorg system
     """
     pkgs = [
-        'xorg-server',
-        'xorg-xinit',
-        'xorg-xev',
-        'xorg-xprop',
-        'xorg-xrdb',
-        'xorg-xkill',
-        'xterm',
         'gksu',
+        'xterm',
         'arandr',
         'xdotool',
+        'xorg-xev',
+        'xorg-xrdb',
+        'xorg-xkill',
+        'xorg-xinit',
+        'xorg-xprop',
+        'xorg-server',
         'xorg-server-utils',
         'xf86-input-synaptics',
-        'alsa-utils',
-        'wicd-gtk',
-        'xournal',
-
     ]
     # Check if a custom package for computer
     env_section = inspect.stack()[0][3]
     if 'pkgs' in env and env_section in env.pkgs:
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
+
     # Install required packages
     env_base()
-    require.arch.packages(pkgs)
+    require.arch.packages(pkgs, options=["--noconfirm"])
 
     # Synchronize user dotfiles
     sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
@@ -222,43 +288,50 @@ def env_xorg_xfce_i3():
     # if not arch.is_installed('xfce4-power-manager') and \
     #    not arch.is_installed('xfce4-wavelan-plugin'):
     pkgs = [
-        # XFCE
-        'exo',
-        'garcon',
-        'gtk2-xfce-engine',
-        'gtk3-xfce-engine',
-        'thunar',
-        'thunar-volman',
-        'tumbler',
-        'ristretto',
-        'xfce4-appfinder',
+
+        # I3
+        'i3-wm',
+        'dmenu',
+        'i3lock',
+        'i3status',
+        'xautolock',
+
+        # XFCE4
+        'xfwm4',
+        'xfconf',
         'xfce4-mixer',
         'xfce4-panel',
-        'xfce4-power-manager',
+        'xfwm4-themes',
         'xfce4-session',
         'xfce4-settings',
         'xfce4-terminal',
-        'xfconf',
-        'xfdesktop',
-        'xfwm4',
-        'xfwm4-themes',
-        #'xfce4-goodies',
-        #'xfce-theme-manager',
+        'xfce4-appfinder',
+        'xfce4-power-manager',
         'xfce-theme-albatross',
-        #'gtk-engine-unico',
-        'elementary-xfce-icons',
-        'shimmer-wallpapers',
-        #
-        # I3
-        'i3-wm',
-        'i3status',
-        'dmenu',
-        'i3lock',
-        'xautolock',
-        #
-        # Commons
+        'xfce4-whiskermenu-plugin',
+
+        # Thunar
+        'unzip',
+        'thunar',
+        'xarchiver',
+        'thunar-volman',
+        'thunar-archive-plugin',
+
+        # Misc
+        'feh',
+        'exo',
         'gvfs',
+        'tumbler',
         'gvfs-smb',
+        'ristretto',
+        'xfdesktop',
+        'rxvt-unicode',
+        'gtk2-xfce-engine',
+        'shimmer-wallpapers',
+        ##'xfce4-goodies',
+        ##'xfce-theme-manager',
+        ##'gtk-engine-unico',
+        #'elementary-xfce-icons',
     ]
     # Check if a custom package for computer
     env_section = inspect.stack()[0][3]
@@ -267,7 +340,7 @@ def env_xorg_xfce_i3():
 
     # Install required packages
     env_xorg()
-    require.arch.packages(pkgs)
+    require.arch.packages(pkgs, options=["--noconfirm"])
 
     # Synchronize user dotfiles
     sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
@@ -284,15 +357,22 @@ def env_xorg_misc(direct=True):
     (Xorg + i3 + lighweight + misc software)
     """
     pkgs = [
+        'sox',
+        'vlc',
+        'slop',
+        'maim',
+        'docker',
+        'openvpn',
         'firefox',
-        'flashplugin',
         'remmina',
         'freerdp',
         'keepassx',
-        'openvpn',
-        'hexchat',
-        'maim',
-        'slop',
+        'flashplugin',
+        'pavucontrol',
+        # Google Chrome
+        'google-chrome',
+        'ttf-liberation'
+
     ]
 
     # Check if a custom package for computer
@@ -301,7 +381,7 @@ def env_xorg_misc(direct=True):
         pkgs = list(set(pkgs + env.pkgs[env_section]))
 
     env_xorg()
-    require.arch.packages(pkgs)
+    require.arch.packages(pkgs, options=["--noconfirm"])
 
     # Synchronize user dotfiles
     sync_dotfiles = 'fabrecipes/autoinstall/%(env_section)s' % locals()
@@ -317,9 +397,16 @@ def configure_base():
     require.python.package('virtualenvwrapper', python_cmd=python_cmd, use_sudo=True)
 
     # Active service
+    # Dont forget edit the /etc/udev/10-network.rules for mac address
     systemd.disable('dhcpcd')
     systemd.enable('sshd')
-    systemd.enable('wicd')
+    systemd.enable('netctl-ifplugd@net0')
+    systemd.enable('netctl-auto@wifi0')
+
+    # Copy udev netework interface
+    fileexists = is_file("/etc/udev/rules.d/10-network.rules")
+    if not fileexists:
+        run_as_root("mv /etc/udev/rules.d/10-network.rules.autoinstall /etc/udev/rules.d/10-network.rules")
 
 
 def configure_xorg():
@@ -344,12 +431,13 @@ def configure_xfce_i3():
     prefix = '$HOME/.cache/sessions/xfce4-session'
     src = '%(prefix)s-HOSTNAME:0' % locals()
     session = '%(prefix)s-%(hostname)s:0' % locals()
-    run('mv "%(src)s" "%(session)s"' % locals())
+    run('cp "%(src)s.autoinstall" "%(session)s"' % locals())
     sed(session, escape('{{USERNAME}}'), username)
     sed(session, escape('{{HOSTNAME}}'), hostname)
 
     # Autologin
     autologin = '/etc/systemd/system/getty@tty1.service.d/autologin.conf'
+    run('cp "%(autologin)s.autoinstall" "%(autologin)s"' % locals())
     sed(autologin, escape('{{USERNAME}}'), username, use_sudo=True)
 
 
@@ -373,8 +461,7 @@ def require_partition():
     Check if all partitions type exist and format
     """
     spart = {'Linux': 0x83, 'Swap': 0x82}
-    p = disk.partitions()
-
+    p = disk.partitions(device=env.disk)
     r = p[env.part['/boot']['device']] == spart['Linux']
     r = r and p[env.part['swap']['device']] == spart['Swap']
     r = r and p[env.part['lvm']['device']] == spart['Linux']
