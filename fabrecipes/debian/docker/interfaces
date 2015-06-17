@@ -1,0 +1,15 @@
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# For docker
+allow-hotplug eth0
+iface eth0 inet manual
+
+allow-hotplug eth1
+iface eth1 inet dhcp
+
+allow-hotplug vswitch0
+iface vswitch0 inet dhcp
