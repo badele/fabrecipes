@@ -259,6 +259,10 @@ def env_xorg():
         'xorg-server',
         'xorg-server-utils',
         'xf86-input-synaptics',
+        'alsa-utils',
+        'wicd-gtk',
+        'xournal',
+        'evince',
     ]
     # Check if a custom package for computer
     env_section = inspect.stack()[0][3]
