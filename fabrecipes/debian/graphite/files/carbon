@@ -1,0 +1,14 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          carbon
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Carbon
+# Description:       Carbon interface for Whisper storage.
+### END INIT INFO
+
+# Author: Mathieu Lecarme <mlecarme@bearstech.com>
+
+/opt/graphite/bin/carbon-cache.py $1
