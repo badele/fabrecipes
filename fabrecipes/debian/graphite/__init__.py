@@ -25,7 +25,8 @@ def install():
     require.deb.packages([
         'gcc',
         'python-dev',
-        'python-pip'
+        'python-pip',
+        'python-cairo'
     ])
 
     # Install Graphite
@@ -43,10 +44,13 @@ def install():
     service.start('carbon')
 
     # Install Django
-    run ('pip install django django-tagging')
+    run ('pip install django django-tagging gunicorn')
 
     with cd('/opt/graphite/webapp/graphite'):
-        run ('cp local_settings.py.example local_settings.py')
-        put('files/local_settings.py', '/opt/graphite/webapps/graphite/')
         run('python manage.py syncdb')
-        run('python manage.py runserver')
+
+    # Install server
+    put('files/local_settings.py', '/opt/graphite/webapps/graphite/')
+    put('files/graphite', '/etc/init.d/', mode=0755)
+    run('update-rc.d graphite defaults')
+    run('python manage.py runserver')

@@ -1,0 +1,32 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          graphite
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Graphite
+# Description:       Graphite web frontend.
+### END INIT INFO
+
+# Author: Mathieu Lecarme <mlecarme@bearstech.com>
+
+PIDFILE=/opt/graphite/storage/graphite.pid
+DAEMON=/opt/graphite/bin/gunicorn_django
+HOST=0.0.0.0
+PORT=8000
+HOME=/opt/graphite/webapp/graphite
+WORKERS=4
+
+case "$1" in
+    start)
+        cd $HOME && $DAEMON --pid $PIDFILE -b $HOST:$PORT --daemon --user $USER --workers $WORKERS
+        ;;
+    stop)
+        kill -9 `cat $PID`
+        ;;
+    *)
+        echo "Usage: graphite {start|stop}" >&2
+        exit 3
+        ;;
+esac
