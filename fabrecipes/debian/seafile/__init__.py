@@ -47,18 +47,18 @@ def install(version,sqlpass):
     require.mysql.server(version='5.5', password=sqlpass)
 
     # # Download a server file
-    # with cd("/tmp"):
-    #     require.file(
-    #         url='https://bitbucket.org/haiwen/seafile/downloads/%(serverfile)s' % locals()
-    #     )
-    #
-    # # Prepare Install
-    # require.directory(destinstall)
-    # with cd(destinstall):
-    #     utils.run_as_root('mv /tmp/seafile-server_* .')
-    #     utils.run_as_root('tar -xvzf seafile-server_*' % locals())
-    #     require.directory('installed')
-    #     utils.run_as_root('mv seafile-server_* installed' % locals())
+    with cd("/tmp"):
+        require.file(
+            url='https://bitbucket.org/haiwen/seafile/downloads/%(serverfile)s' % locals()
+        )
+
+    # Prepare Install
+    require.directory(destinstall)
+    with cd(destinstall):
+        utils.run_as_root('mv /tmp/seafile-server_* .')
+        utils.run_as_root('tar -xvzf seafile-server_*' % locals())
+        require.directory('installed')
+        utils.run_as_root('mv seafile-server_* installed' % locals())
 
     # Install MySQL
     with cd('%(destinstall)s/seafile-server-%(version)s' % locals()):
