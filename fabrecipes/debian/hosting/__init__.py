@@ -69,6 +69,11 @@ def install(hostdir):
 
 @task
 def addWebserver(webserver):
+    """
+    Add a virtual webserver
+    :param webserver:
+    :return:
+    """
     hostdir = gethostdir()
 
     # Stop uwsgi
@@ -99,6 +104,12 @@ def addWebserver(webserver):
 
 @task
 def addRootFlask(webserver, appname):
+    """
+    Add a flask webserver
+    :param webserver:
+    :param appname:
+    :return:
+    """
     hostdir = gethostdir()
 
     # Create web directory
