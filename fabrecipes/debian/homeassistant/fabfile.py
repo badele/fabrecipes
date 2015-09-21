@@ -1,0 +1,1 @@
+from fabrecipes.debian.homeassistant import *
