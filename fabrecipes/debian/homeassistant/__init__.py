@@ -33,9 +33,8 @@ def dev():
     Install development home assistant(debian wheezy and Raspberry PI wheezy)
     """
 
-
     python34()
-    homeassistant_pip()
+    homeassistant_dev()
     nmap()
 
 
@@ -53,10 +52,12 @@ def homeassistant_dev():
     Install homeassistant
     """
 
-    run_as_root('cd /opt/&& git clone https://github.com/balloob/home-assistant.git')
+
+    if not is_dir('/opt/home-assistant'):
+        run_as_root('cd /opt/&& git clone https://github.com/balloob/home-assistant.git')
 
     with cd('/opt/home-assistant'):
-        run_as_root('python3 setup.py install')
+        run_as_root('script/setup')
 
 
 @task
