@@ -15,18 +15,57 @@ from fabtools.files import watch, is_dir, is_link, is_file
    Install home assistant in debian wheezy and Raspberry PI wheezy
 """
 
+
 @task
-def install():
+def stable():
     """
-    Install home assistant in debian wheezy and Raspberry PI wheezy
+    Install stable home assistant(debian wheezy and Raspberry PI wheezy)
     """
 
     python34()
-    homeassistant()
+    homeassistant_pip()
+    nmap()
+
 
 @task
-def homeassistant():
+def dev():
+    """
+    Install development home assistant(debian wheezy and Raspberry PI wheezy)
+    """
+
+
+    python34()
+    homeassistant_pip()
+    nmap()
+
+
+@task
+def homeassistant_pip():
+    """
+    Install homeassistant via pip
+    """
     run_as_root('pip3.4 install homeassistant')
+
+
+@task
+def homeassistant_dev():
+    """
+    Install homeassistant
+    """
+
+    run_as_root('cd /opt/&& git clone https://github.com/balloob/home-assistant.git')
+
+    with cd('/opt/home-assistant'):
+        run_as_root('python3 setup.py install')
+
+
+@task
+def nmap():
+    """
+    Install nmap
+    """
+    run_as_root('apt-get install -y --no-install-recommends nmap net-tools')
+
 
 @task
 def python34():
