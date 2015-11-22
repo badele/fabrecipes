@@ -310,6 +310,7 @@ def env_xorg_xfce_i3():
         'xfce4-settings',
         'xfce4-terminal',
         'xfce4-appfinder',
+        'xfce4-screenshooter',
         'xfce4-power-manager',
         'xfce-theme-albatross',
         'xfce4-whiskermenu-plugin',
